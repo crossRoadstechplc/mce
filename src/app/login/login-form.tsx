@@ -117,7 +117,7 @@ export default function LoginForm() {
             <span className="cc">+251</span>
             <input id="phone" className="input" type="tel" inputMode="tel" autoComplete="tel-national" autoFocus required placeholder="9X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
-          <span className="help">Ethio Telecom (09…) or Safaricom (07…) number.</span>
+          <span className="help">For example 0911 234 567.</span>
         </div>
         {error && <p className="err" role="alert">{error}</p>}
         <button className="btn" disabled={busy || wait > 0}>{busy ? <><Spinner /> Sending code…</> : wait > 0 ? `Wait ${wait}s` : "Send code"}</button>
