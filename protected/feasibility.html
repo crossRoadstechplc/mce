@@ -1,0 +1,693 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MCE Residential Feasibility</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one headline verdict on debt repayment across the top; below it inputs left, folded analysis right; stacks on phones. Single light theme by choice. */
+:root{
+  color-scheme:light;
+  --bg:#F3F8FD; --surface:#FFFFFF; --silver:#EBEFF4; --silver-2:#D5DCE4; --ink:#1D2A3A; --muted:#6A7889; --faint:#93A0AF;
+  --accent:#3A7AC2; --accent-soft:#E4EFFA;
+  --go:#25834F; --go-soft:#E7F5EC; --warn:#A86F17; --warn-soft:#FCF2E1; --stop:#BB4038; --stop-soft:#FBE8E6;
+  --c-a:#9FB7D4; --c-b:#3A7AC2; --c-mce:#C9D3DE; --c-ds:#1D2A3A;
+  --font:"Manrope","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --fs-hero:clamp(2.6rem,7vw,3.9rem); --fs-kpi:1.4rem; --fs-h:1.02rem; --fs-body:.92rem; --fs-small:.8rem; --fs-micro:.72rem;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 40px;display:grid;gap:20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.masthead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand{font-size:var(--fs-micro);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.masthead h1{font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.mode{font-size:var(--fs-small);color:var(--muted)}
+
+.mini{position:fixed;left:0;right:0;top:0;z-index:9;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--silver-2);padding-top:env(safe-area-inset-top,0px);transform:translateY(-110%);transition:transform .2s ease}
+.mini.show{transform:none}
+.mini-in{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:9px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mini b{font-size:1.05rem;font-weight:800}
+.mini .sub{font-size:var(--fs-small);color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.mini{transition:none}}
+
+/* level 1 */
+.hero{border-radius:18px;padding:22px clamp(18px,3vw,30px);display:grid;gap:16px;border:1px solid var(--silver-2);transition:background-color .25s}
+.hero.go{background:var(--go-soft);border-color:#CFE8D9}
+.hero.warn{background:var(--warn-soft);border-color:#F1DFC0}
+.hero.stop{background:var(--stop-soft);border-color:#F1CFCB}
+.hero-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chip{font-weight:800;letter-spacing:.08em;font-size:.9rem;padding:6px 14px;border-radius:999px;background:var(--surface);white-space:nowrap}
+.chip.sm{font-size:.72rem;padding:3px 10px}
+.chip.go{color:var(--go)} .chip.warn{color:var(--warn)} .chip.stop{color:var(--stop)}
+.hero-label{font-size:var(--fs-small);color:var(--muted);font-weight:600}
+.viewing{font-size:var(--fs-micro);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--stop);background:var(--surface);padding:3px 9px;border-radius:6px}
+.hero-figure{font-size:var(--fs-hero);font-weight:800;letter-spacing:-.025em;line-height:1}
+.hero-figure .unit{font-size:.42em;font-weight:700;color:var(--muted);margin-left:.25em;letter-spacing:0}
+.hero-line{margin:0;max-width:66ch;font-size:.98rem}
+.alt{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--fs-small);background:rgba(255,255,255,.7);border-radius:10px;padding:8px 12px}
+.alt b{font-weight:700}
+/* level 2 */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kpi{background:rgba(255,255,255,.75);border-radius:12px;padding:11px 14px}
+.kpi .l{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-size:var(--fs-kpi);font-weight:700;white-space:nowrap}
+.kpi .s{font-size:var(--fs-micro);color:var(--muted)}
+@media (max-width:560px){.kpis{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kpi:last-child{grid-column:1/-1}}
+.scen{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--fs-small);color:var(--muted)}
+.scen button{border:1px solid var(--silver-2);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:var(--fs-small);font-weight:600}
+.scen button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+.fold>summary{display:flex;align-items:center;gap:12px;padding:15px 18px}
+.fold>summary .t{font-size:var(--fs-h);font-weight:700;white-space:nowrap;flex:none}
+.fold>summary .gist{font-size:var(--fs-small);color:var(--muted);margin-left:auto;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fold>summary::after,.sub>summary::after,.hero details>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(45deg) translateY(-2px);flex:none;transition:transform .18s}
+.fold[open]>summary::after,.sub[open]>summary::after,.hero details[open]>summary::after{transform:rotate(225deg) translate(-2px,0)}
+.fold{background:var(--surface);border:1px solid var(--silver-2);border-radius:14px;min-width:0}
+.fold-body{padding:0 18px 18px;min-width:0}
+@media (max-width:520px){.fold>summary .gist{display:none}.fold>summary .t{margin-right:auto}}
+.hero details>summary{display:inline-flex;align-items:center;gap:10px;font-size:var(--fs-small);font-weight:700;color:var(--accent)}
+.hero details>summary::after{border-color:var(--accent)}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:12px}
+.dg{background:rgba(255,255,255,.75);border-radius:10px;padding:9px 12px}
+.dg .l{font-size:var(--fs-micro);color:var(--muted);font-weight:600}
+.dg .v{font-weight:700;font-size:1rem}
+.dg .s{font-size:var(--fs-micro);color:var(--muted)}
+
+.bench{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.bench{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--silver-2);border-radius:16px;padding:18px;display:grid;gap:16px}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline}
+.panel-h h2{font-size:var(--fs-h);font-weight:700}
+.panel-h button{border:0;background:none;color:var(--accent);font-size:var(--fs-small);font-weight:600;padding:0}
+.grp-label{font-size:var(--fs-micro);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:-4px}
+.fields{display:grid;gap:15px}
+.field{display:grid;gap:6px}
+.field-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.field label{font-weight:600}
+.numbox{display:flex;align-items:center;gap:5px;background:var(--silver);border-radius:8px;padding:3px 9px}
+.numbox input{width:84px;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:700;text-align:right;padding:3px 0}
+.numbox .u{font-size:var(--fs-micro);color:var(--muted);white-space:nowrap}
+.help{font-size:var(--fs-micro);color:var(--muted);line-height:1.4}
+input[type=range]{width:100%;margin:0;accent-color:var(--accent);height:18px}
+.derived{font-size:var(--fs-small);color:var(--muted);background:var(--bg);border-radius:10px;padding:9px 12px}
+.derived b{color:var(--ink);font-weight:700}
+.seg{display:flex;background:var(--silver);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px;border-radius:8px;font-weight:700;font-size:var(--fs-micro)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(29,42,58,.12)}
+.more>summary{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--silver);font-weight:700;font-size:var(--fs-small);color:var(--accent)}
+.more>summary::after{content:"Show";font-weight:600}
+.more[open]>summary::after{content:"Hide"}
+.subs{display:grid;gap:6px}
+.sub{background:var(--bg);border-radius:10px}
+.sub>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;font-size:var(--fs-small);font-weight:700}
+.sub .fields{padding:2px 12px 14px;gap:12px}
+.sub .field label{font-size:var(--fs-small)}
+.sub .numbox{background:var(--surface)}
+.sub .numbox input{width:72px;font-size:var(--fs-small)}
+.sub.worst{background:var(--stop-soft)}
+
+.analysis{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
+.analysis-h{font-size:var(--fs-micro);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:4px 2px}
+.lead{margin:0 0 12px;font-size:var(--fs-small);color:var(--muted);max-width:64ch}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--fs-micro);color:var(--muted);margin-bottom:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.scroll{overflow-x:auto}
+svg text{font-family:var(--font);font-size:10px;fill:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:var(--fs-small)}
+th,td{padding:6px 8px;text-align:right;white-space:nowrap}
+th{font-weight:700;color:var(--muted);font-size:var(--fs-micro);letter-spacing:.05em;border-bottom:1px solid var(--silver-2)}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:inherit}
+tbody tr{background:var(--surface)}
+tbody tr:nth-child(even){background:var(--bg)}
+tr.tot td{font-weight:800;border-top:1px solid var(--silver-2)}
+td.neg{color:var(--stop)} td.low{color:var(--stop);font-weight:800} td.mid{color:var(--warn);font-weight:800}
+.notes{display:grid;gap:9px;font-size:var(--fs-small);color:var(--muted);max-width:70ch}
+.notes p{margin:0}
+.notes a{color:var(--accent)}
+.foot{border-top:1px solid var(--silver-2);padding-top:14px;display:grid;gap:6px;font-size:.68rem;line-height:1.5;color:var(--faint);max-width:90ch}
+.foot p{margin:0}
+.foot b{color:var(--muted);font-weight:700;white-space:nowrap}
+details.panel{padding:0;display:block}
+details.panel>summary{display:flex;align-items:center;gap:12px;padding:15px 18px}
+details.panel>summary .t{font-size:var(--fs-h);font-weight:700;white-space:nowrap}
+details.panel>summary .gist{margin-left:auto;font-size:var(--fs-small);color:var(--muted);text-align:right}
+details.panel>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(45deg) translateY(-2px);flex:none;transition:transform .18s}
+details.panel[open]>summary::after{transform:rotate(225deg) translate(-2px,0)}
+.panel-body{padding:0 18px 18px;display:grid;gap:16px}
+.field[data-tip] label{text-decoration:underline dotted var(--faint);text-underline-offset:4px;cursor:help}
+.kpi[data-tip],.dg[data-tip],#heroFig,#chip,#alt,td[data-tip]{cursor:help}
+.tip{position:fixed;z-index:20;max-width:300px;background:var(--surface);color:var(--ink);border:1px solid var(--silver-2);border-radius:10px;padding:10px 12px;font-size:var(--fs-small);line-height:1.45;box-shadow:0 8px 24px rgba(29,42,58,.14);pointer-events:none;opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+.front{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.front{grid-template-columns:minmax(0,1fr)}}
+.card-q{font-size:var(--fs-h);font-weight:700}
+.econ{background:var(--surface);border:1px solid var(--silver-2);border-radius:18px;padding:22px clamp(18px,3vw,26px);display:grid;gap:14px;min-width:0}
+.econ .fig{font-size:clamp(2rem,5vw,2.7rem);font-weight:800;letter-spacing:-.02em;line-height:1;cursor:help}
+.econ .fig .unit{font-size:.45em;font-weight:700;color:var(--muted);margin-left:.25em;letter-spacing:0}
+.econ .line{margin:0;font-size:.9rem;max-width:60ch}
+.econ .lev{font-size:var(--fs-small);background:var(--bg);border-radius:10px;padding:9px 12px;cursor:help}
+.econ .lev b{font-weight:800}
+.econ .chip.go{background:var(--go-soft)} .econ .chip.warn{background:var(--warn-soft)} .econ .chip.stop{background:var(--stop-soft)}
+.phases{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.phase{background:rgba(255,255,255,.5);border-radius:12px;padding:9px 12px;border:1px solid transparent;cursor:help}
+.phase.bind{background:var(--surface);border-color:var(--silver-2)}
+.phase .l{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.phase b{font-size:1.15rem;font-weight:800}
+.phase .s{font-size:var(--fs-micro);color:var(--muted)}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:12px}
+.seg.sm{display:inline-flex}
+.seg.sm button{flex:none;padding:6px 12px}
+.loan-sum{font-size:.9rem;margin:0 0 14px;max-width:68ch}
+.loan-sum b{font-weight:800}
+.tbl-tall{max-height:440px;overflow:auto;border:1px solid var(--silver);border-radius:10px}
+.tbl-tall th{position:sticky;top:0;background:var(--surface);z-index:1}
+.stage{font-size:var(--fs-micro);color:var(--muted);text-align:left}
+.phase-note{grid-column:1/-1;margin:0;font-size:var(--fs-small);color:var(--muted);max-width:66ch}
+</style>
+
+<div class="mini" id="mini" aria-hidden="true">
+  <div class="mini-in">
+    <span class="chip" id="miniChip">GO</span>
+    <b id="miniFig">0</b>
+    <span class="sub" id="miniSub"></span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <div class="brand">MCE Real Estate · Building B · Addis Ababa</div>
+      <h1>Should MCE build Building B?</h1>
+    </div>
+    <div class="mode">Buy land with cash, build, borrow the rest, hold for rent</div>
+  </header>
+
+  <div class="front">
+  <section class="hero go" id="hero" aria-live="polite">
+    <h2 class="card-q">Can we repay the bank?</h2>
+    <div class="hero-top">
+      <span class="chip go" id="chip" data-tip="GO: income covers loan payments by at least the bank's minimum in every year. TIGHT: every payment can be met, but cover dips below the bank's minimum in some year. NO GO: in at least one year income does not cover what is owed.">GO</span>
+      <span class="hero-label" id="heroLabel">Lowest debt cover in any year</span>
+      <span class="viewing" id="viewing" hidden>Worst case</span>
+    </div>
+    <div class="hero-figure" id="heroFig" data-tip="Debt cover is the cash available in a year (rental income after running costs and tax, plus MCE's cash) divided by that year's loan payments. This is the lowest figure across all years, the year the bank would worry about most.">0</div>
+    <p class="hero-line" id="heroLine"></p>
+    <div class="phases" id="phases"></div>
+    <div class="alt" id="alt" data-tip="The other scenario, so the base case and worst case are always visible together. Switch between them with the buttons below."></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="scen" role="group" aria-label="Scenario">
+      <span>Show</span>
+      <button data-view="base" aria-pressed="true">Base case</button>
+      <button data-view="worst" aria-pressed="false">Worst case</button>
+    </div>
+    <details id="d_results" data-remember>
+      <summary>All results</summary>
+      <div class="detail-grid" id="detailGrid"></div>
+    </details>
+  </section>
+  <section class="econ" id="econ" aria-live="polite">
+    <h2 class="card-q">Does it build wealth?</h2>
+    <div class="hero-top"><span class="chip" id="econChip" data-tip="GO: Building B leaves MCE wealthier in dollars than keeping the cash in a birr deposit, and the building earns more than the loan costs. MIXED: wealthier, but the gain comes from building below market value rather than from borrowing. NO GO: MCE would be better off keeping the cash in a deposit.">GO</span><span class="hero-label" id="econLabel"></span></div>
+    <div class="fig" id="econFig" data-tip="Value of Building B, less the loan still owed on it, plus all the cash it has produced or minus all the cash it has needed after loan payments, converted to US dollars at that year's exchange rate."></div>
+    <p class="line" id="econLine"></p>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Building B, after its loan</span><span><i style="background:var(--faint)"></i>Same cash in a birr deposit</span></div>
+    <div id="econChart"></div>
+    <div class="lev" id="econLev" data-tip="Borrowing adds value only when the building earns more each year, in birr, than the loan costs. The building's return is its rent yield on cost plus the yearly rise in its value from dollar rent growth and birr depreciation."></div>
+  </section>
+  </div>
+
+  <div class="bench">
+    <details class="panel" id="d_inputs" data-remember aria-label="Inputs">
+      <summary><span class="t">Key inputs</span><span class="gist">Open to adjust</span></summary>
+      <div class="panel-body">
+      <div class="panel-h"><span class="help">Point at any label for an explanation.</span><button id="resetBtn" type="button">Reset to defaults</button></div>
+      <div class="grp-label">New building</div>
+      <div class="fields" id="f_build"></div>
+      <div class="derived" id="derived"></div>
+      <div class="grp-label">Funding and support</div>
+      <div class="fields" id="f_fund"></div>
+      <details class="more" id="d_more" data-remember>
+        <summary>More assumptions</summary>
+        <div class="subs" id="subs"></div>
+      </details>
+      </div>
+    </details>
+
+    <main class="analysis">
+      <div class="analysis-h">Analysis</div>
+
+      <details class="fold" id="d_cover" data-remember open>
+        <summary><span class="t">Income against loan payments</span><span class="gist" id="g_cover"></span></summary>
+        <div class="fold-body">
+          <p class="lead">Each bar is the cash available in that year from rental income and MCE, after running costs and tax. The dark line is what the banks must be paid. The figure under each year is the cover: income divided by loan payments.</p>
+          <div class="legend"><span><i style="background:var(--c-a)"></i>Existing building</span><span><i style="background:var(--c-b)"></i>Building B</span><span><i style="background:var(--c-mce)"></i>MCE operating cash</span><span><i style="background:var(--c-ds);height:3px;vertical-align:3px"></i>Loan payments</span></div>
+          <div class="scroll" id="coverChart"></div>
+        </div>
+      </details>
+
+      <details class="fold" id="d_pl" data-remember>
+        <summary><span class="t">Real estate income statement</span><span class="gist" id="g_pl"></span></summary>
+        <div class="fold-body">
+          <p class="lead">The two buildings as their own business, with their own income statement and profit tax, separate from pay TV. ETB millions.</p>
+          <div class="scroll" id="plTable"></div>
+        </div>
+      </details>
+
+      <details class="fold" id="d_loan" data-remember>
+        <summary><span class="t">Bank loan repayment</span><span class="gist" id="g_loan"></span></summary>
+        <div class="fold-body">
+          <p class="loan-sum" id="loanSum"></p>
+          <div class="ctrl">
+            <div class="seg sm" id="loanView" role="group" aria-label="Show as"><button type="button" data-v="chart">Chart</button><button type="button" data-v="table">Table</button></div>
+            <div class="seg sm" id="loanPer" role="group" aria-label="Period"><button type="button" data-v="1">Monthly</button><button type="button" data-v="3">Quarterly</button><button type="button" data-v="12">Yearly</button></div>
+          </div>
+          <div id="loanChartWrap">
+            <p class="lead">Outstanding balance of the new Building B loan and the remaining loan on the existing building, ETB millions.</p>
+            <div class="legend"><span><i style="background:var(--accent)"></i>Building B loan</span><span><i style="background:var(--c-a)"></i>Existing building loan</span></div>
+            <div class="scroll" id="loanChart"></div>
+          </div>
+          <div id="loanTableWrap" hidden>
+            <p class="lead">Schedule of what is borrowed and paid to the banks, ETB millions. Point at a column heading for an explanation.</p>
+            <div class="tbl-tall" id="loanTable"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="fold" id="d_sens" data-remember>
+        <summary><span class="t">What moves the answer</span><span class="gist" id="g_sens"></span></summary>
+        <div class="fold-body">
+          <p class="lead">How the lowest yearly cover changes when each assumption is moved down or up, all else unchanged. Largest effect first. The dashed line is the bank's minimum.</p>
+          <div class="scroll" id="tornado"></div>
+        </div>
+      </details>
+
+      <details class="fold" id="d_table" data-remember>
+        <summary><span class="t">Year by year</span><span class="gist" id="g_table"></span></summary>
+        <div class="fold-body"><div class="scroll" id="annual"></div></div>
+      </details>
+
+      <details class="fold" id="d_notes" data-remember>
+        <summary><span class="t">Method and sources</span><span class="gist">How the numbers are built</span></summary>
+        <div class="fold-body notes">
+          <p>The verdict is GO when, in every year, cash available covers loan payments at least as many times as the bank's minimum cover. It is TIGHT when cover stays above 1.0 but dips below the bank's minimum in some year, and NO GO when any year's cash falls short of what is owed.</p>
+          <p>Cash available is rent from both buildings, less running costs and profit tax, plus the MCE operating cash you commit to the project. Loan payments are interest and principal on the new Building B loan plus payments on the existing building's remaining loan. The two buildings are treated as a separate real estate business with their own income statement. Profit tax is charged on rent after running costs, interest and depreciation, and losses can be carried forward five years if that option is on. MCE's cash is taken after the pay TV business has paid its own tax, so it is not taxed again.</p>
+          <p>The land is paid in cash at the start. The extra company cash funds the first part of construction, and the bank funds the rest as construction proceeds. The all-in finished cost per m² includes kitchens and appliances, and rises with construction inflation from today. Interest during construction is either paid from income or added to the loan. Repayment starts after the grace period and runs as equal monthly instalments over the loan term.</p>
+          <p>Rents are set in US dollars and collected in birr at the exchange rate of the day, which moves with the stated depreciation. After completion, Building B's rental income builds up evenly to full occupancy over the months it takes to fully rent. The worst case applies all the stresses in the Worst case group at once.</p>
+          <p>Default inputs come from the Building Project B workbook prepared by MCE finance (rentable area, apartment mix, dollar rents, existing loan of ETB 26.3M at 19 percent, MCE dividend capacity) and your note that land costs about ETB 83M plus fees and that finished construction costs ETB 100,000 per m². Bank rates reflect the NBE policy rate of 16 percent set in July 2026 (<a href="https://www.briefs.co/news/ethiopias-central-bank-hikes-lending-rate-to-16-removes-credit-ceiling/" target="_blank" rel="noopener">Briefs</a>).</p>
+        </div>
+      </details>
+    </main>
+  </div>
+
+  <footer class="foot">
+    <p><b>© 2026 SPX.</b> All rights reserved.</p>
+    <p>For discussion only. Results are illustrative and depend entirely on the assumptions entered. They are not a forecast, a valuation, an offer or commitment of financing, or investment, tax, legal or accounting advice. Confirm figures against audited accounts, contractor quotes and lender term sheets, and take professional advice before making decisions.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+const DEF=[
+ {g:"build", id:"land", l:"Land and acquisition", u:"ETB M", min:20, max:300, st:1, d:90, h:"Paid in cash at the start. ETB 83M plus insurance and brokerage."},
+ {g:"build", id:"gfa", l:"Built floor area", u:"m²", min:1000, max:12000, st:50, d:3600, h:"450 m² footprint over 8 floors."},
+ {g:"build", id:"cost", l:"Finished cost, all-in", u:"ETB/m²", min:50000, max:200000, st:1000, d:100000, h:"Per built m², including kitchens and appliances, at today's prices."},
+ {g:"build", id:"buildM", l:"Construction period", u:"months", min:12, max:72, st:3, d:30},
+ {g:"build", id:"rentB", l:"Rent", u:"USD/m²/mo", min:5, max:40, st:0.25, d:16.5, h:"Per rentable m², fully let. Workbook average is about USD 16.6."},
+ {g:"build", id:"occB", l:"Occupancy", u:"%", min:40, max:100, st:1, d:85},
+
+ {g:"fund", id:"extraCash", l:"Extra company cash", u:"ETB M", min:0, max:200, st:1, d:35, h:"Cash beyond the land, spent on construction before borrowing."},
+ {g:"fund", id:"rate", l:"Bank interest", u:"% a year", min:8, max:35, st:0.25, d:19},
+ {g:"fund", id:"tenor", l:"Loan term after grace", u:"years", min:3, max:20, st:1, d:10},
+ {g:"fund", id:"mce", l:"MCE cash available for debt", u:"ETB M/yr", min:0, max:400, st:5, d:120, h:"Operating cash MCE can commit each year. Workbook net dividend capacity is about ETB 137M before shareholder payments."},
+
+ {s:"Existing building", id:"rentA", l:"Rent when fully let", u:"USD/mo", min:10000, max:100000, st:250, d:43050, h:"13 apartments, from the workbook rent schedule."},
+ {s:"Existing building", id:"occA", l:"Occupancy", u:"%", min:40, max:100, st:1, d:90},
+ {s:"Existing building", id:"loanA", l:"Remaining loan", u:"ETB M", min:0, max:200, st:0.5, d:26.3},
+ {s:"Existing building", id:"rateA", l:"Loan interest", u:"%", min:5, max:35, st:0.25, d:19},
+ {s:"Existing building", id:"yrsA", l:"Years left on loan", u:"years", min:1, max:15, st:1, d:5},
+ {s:"Existing building", id:"depA", l:"Annual depreciation", u:"ETB M", min:0, max:60, st:0.5, d:16},
+ {s:"Existing building", id:"valA", l:"Market value", u:"ETB M", min:100, max:1500, st:5, d:493, h:"2,594 m² at ETB 190,000 per m², from the workbook sale comparables."},
+
+ {s:"Building B detail", id:"eff", l:"Rentable share of floor area", u:"%", min:50, max:90, st:1, d:65},
+ {s:"Building B detail", id:"cont", l:"Contingency", u:"%", min:0, max:30, st:1, d:5},
+ {s:"Building B detail", id:"infl", l:"Construction inflation", u:"% a year", min:0, max:40, st:0.5, d:10},
+ {s:"Building B detail", id:"startM", l:"Construction starts", u:"months from Jan 2027", min:0, max:24, st:1, d:3},
+ {s:"Building B detail", id:"leaseUp", l:"Months to fully rent Building B", u:"months", min:1, max:24, st:1, d:6, h:"After completion, rental income builds up evenly from zero to the full occupancy over this period."},
+ {s:"Building B detail", id:"exitYield", l:"Valuation yield", u:"%", min:4, max:20, st:0.25, d:9, h:"Used only to value Building B on completion."},
+
+ {s:"Running costs and tax", id:"opex", l:"Running costs and maintenance", u:"% of rent", min:5, max:50, st:1, d:20},
+ {s:"Running costs and tax", id:"tax", l:"Profit tax", u:"%", min:0, max:40, st:1, d:30},
+ {s:"Running costs and tax", id:"depYrs", l:"Building B depreciation", u:"years", min:10, max:50, st:1, d:20},
+ {s:"Running costs and tax", id:"lossCF", l:"Tax losses", u:"", min:0, max:1, st:1, d:0, seg:["Carry forward 5 years","No carry forward"]},
+
+ {s:"Currency and growth", id:"fx", l:"Exchange rate today", u:"ETB/USD", min:50, max:400, st:1, d:165},
+ {s:"Currency and growth", id:"fxDep", l:"Birr depreciation", u:"% a year", min:0, max:30, st:0.5, d:5},
+ {s:"Currency and growth", id:"usdGrowth", l:"Dollar rent growth", u:"% a year", min:-10, max:15, st:0.5, d:2},
+ {s:"Currency and growth", id:"mceGrowth", l:"MCE cash growth", u:"% a year", min:-20, max:20, st:0.5, d:0},
+
+ {s:"Bank terms", id:"grace", l:"Grace after completion", u:"months", min:0, max:24, st:1, d:6},
+ {s:"Bank terms", id:"minCover", l:"Bank minimum cover", u:"×", min:1, max:2.5, st:0.05, d:1.25, h:"Lenders usually ask for 1.2 to 1.5 times."},
+ {s:"Economic view", id:"depRate", l:"Return on cash kept in the bank", u:"% a year", min:0, max:25, st:0.5, d:12},
+ {s:"Economic view", id:"horizon", l:"Compare wealth after", u:"years", min:3, max:15, st:1, d:10},
+ {s:"Bank terms", id:"capInt", l:"Interest during construction", u:"", min:0, max:1, st:1, d:0, seg:["Paid from income","Added to loan"]},
+
+ {s:"Worst case definition", w:1, id:"sRent", l:"Rents fall by", u:"%", min:0, max:60, st:1, d:25},
+ {s:"Worst case definition", w:1, id:"sOcc", l:"Occupancy falls by", u:"points", min:0, max:40, st:1, d:15},
+ {s:"Worst case definition", w:1, id:"sCost", l:"Construction overrun", u:"%", min:0, max:60, st:1, d:20},
+ {s:"Worst case definition", w:1, id:"sDelay", l:"Completion delay", u:"months", min:0, max:36, st:1, d:12},
+ {s:"Worst case definition", w:1, id:"sRate", l:"Interest rises by", u:"points", min:0, max:12, st:0.25, d:4},
+ {s:"Worst case definition", w:1, id:"sMce", l:"MCE cash falls by", u:"%", min:0, max:100, st:5, d:40},
+ {s:"Worst case definition", w:1, id:"sFx", l:"Birr depreciation becomes", u:"% a year", min:0, max:30, st:0.5, d:0, h:"Slower depreciation means dollar rents bring in fewer birr."}
+];
+const TIPS={
+ land:"What it costs to secure the Building B site, paid in cash at the start: the ETB 83M price plus 6.5% insurance and 2% brokerage. No borrowing is used for land.",
+ gfa:"Total built floor area across all floors, including stairs, lifts and corridors. The default is a 450 m² footprint over 8 floors. The finished cost per m² is applied to this area.",
+ cost:"Cost to build each m² fully finished and ready to rent, including kitchens, refrigerators, washing machines and stoves, at today's prices. It rises with construction inflation during the build.",
+ buildM:"Months from the start of construction to handover. A longer build means more interest is paid before Building B earns any rent.",
+ rentB:"Monthly rent in US dollars for each rentable m² of Building B when let. It is collected in birr at the exchange rate of the day.",
+ occB:"Average share of Building B rented once it is fully rented. 85% allows for gaps between tenants.",
+ extraCash:"Company cash beyond the land, spent on construction before any bank money is drawn. More cash means a smaller loan.",
+ rate:"Annual interest rate on the new Building B bank loan.",
+ tenor:"Years over which the new loan is repaid in equal monthly instalments, starting after the grace period. A longer term lowers each year's payment.",
+ mce:"Cash the pay TV business can put towards loan payments each year, after paying its own tax. It is kept outside the real estate income statement and is not taxed again here.",
+ rentA:"Monthly rent in US dollars for all 13 apartments in the existing building when fully let.",
+ occA:"Average share of the existing building that is rented.",
+ loanA:"Outstanding balance of the existing building's bank loan. Its payments count in the debt test.",
+ rateA:"Interest rate on the existing building's loan.",
+ yrsA:"Years left until the existing loan is fully repaid.",
+ depA:"Yearly tax depreciation on the existing building. It lowers taxable profit but is not a cash cost.",
+ valA:"Today's market value of the existing building, used only to show loan to value.",
+ eff:"Share of built floor area that can be rented. The rest is stairs, lifts, corridors and services.",
+ cont:"Allowance added to construction cost for items not yet priced and unexpected work.",
+ infl:"Yearly rise in construction prices from today until each payment is made.",
+ startM:"Months after January 2027 when construction begins, allowing for design and permits.",
+ leaseUp:"After completion, Building B's rental income builds up evenly from zero to full occupancy over this many months. If tenants sign before handover, set it to 1 or 2.",
+ exitYield:"Used only to value Building B on completion: yearly net rent divided by this yield. A lower yield means a higher value.",
+ opex:"Running costs and maintenance as a share of rent: staff, guards, cleaning, repairs, common-area utilities, insurance and replacing appliances.",
+ tax:"Profit tax on the real estate business. The buildings have their own income statement and are taxed separately from pay TV.",
+ depYrs:"Years over which Building B's construction cost is depreciated for tax.",
+ lossCF:"Whether real estate losses, mainly from interest during construction, can be set against the buildings' profits in the next five years. Confirm with your tax adviser.",
+ fx:"Birr per US dollar today.",
+ fxDep:"Yearly fall of the birr against the dollar. Rents are set in dollars and the loan is in birr, so faster depreciation raises rent in birr relative to the loan.",
+ usdGrowth:"Yearly increase in the dollar rent itself, for both buildings.",
+ mceGrowth:"Yearly change in the cash the pay TV business commits.",
+ grace:"Months after completion before principal repayments start. Interest is still due during the grace period.",
+ minCover:"The lowest cover banks usually accept: yearly income divided by yearly loan payments. Lenders typically ask for 1.2 to 1.5 times.",
+ capInt:"Whether interest during construction is paid each month from income, or added to the loan and repaid later. Adding it protects cash during construction but makes the loan larger.",
+ sRent:"Worst case: how far rents fall from the base case, in both buildings.",
+ sOcc:"Worst case: how many percentage points occupancy falls, in both buildings.",
+ sCost:"Worst case: construction cost overrun on top of the base cost.",
+ sDelay:"Worst case: months of delay to completion. Interest keeps running while Building B earns no rent.",
+ sRate:"Worst case: rise in the Building B loan interest rate.",
+ sMce:"Worst case: fall in the cash the pay TV business can commit.",
+ sFx:"Worst case birr depreciation. Slower depreciation means dollar rents bring in fewer birr.",
+ depRate:"What the same cash would earn each year in a birr bank deposit if Building B were not built. This is the alternative the project is compared against.",
+ horizon:"Number of years from January 2027 at which the wealth comparison on the front page is made."
+};
+const KTIPS=["The largest amount owed on the Building B loan, usually around completion.","Lowest cover from rental income only, once Building B is fully rented, ignoring MCE's cash. Above 1.0 means the buildings pay their own debt.","Building B's net rent in its first full year divided by everything spent on it: land, construction and any interest added to the loan."];
+const DGTIPS=["Month construction finishes and Building B can start renting. Principal repayments begin after the grace period.","Total spent on construction, including contingency and inflation during the build.","Interest during construction added to the loan instead of paid, if that option is chosen.","Everything Building B costs: land, construction and interest added to the loan.","What Building B would be worth once fully rented, at the valuation yield, compared with what it cost.","Peak bank debt divided by the value of both buildings. Banks usually want this well below 60 to 70%.","Building B's own return before tax and debt over the model period, assuming it is sold at the valuation yield at the end.","Total cash left after every loan payment, rent and MCE's contribution added up to the last year.","Total loan payments in the first full year of repayment, the heaviest regular year."];
+const ROWTIP={"Cash available":"Rental income after running costs and tax, plus MCE's cash.","Loan payments":"Interest and principal on both bank loans.","Cover":"Cash available divided by loan payments. Below 1.0 means a shortfall that year.","Cover, buildings alone":"Rental income after costs and tax divided by loan payments, without MCE's cash.","Cumulative surplus":"Running total of cash available less loan payments.","Profit before tax":"Rent less running costs, depreciation and interest.","Losses used":"Earlier real estate losses set against this year's profit.","Taxable profit":"Profit after losses carried forward.","Depreciation":"Tax depreciation on both buildings. Not a cash cost.","Interest":"Interest paid on both loans in the year."};
+const P={}; DEF.forEach(d=>P[d.id]=d.d); let view="base";
+const KEY="mce-buildingB-v3"; let openState={};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s){Object.keys(s.P||{}).forEach(k=>{if(k in P)P[k]=s.P[k]}); openState=s.open||{}; if(s.view)view=s.view}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({P,open:openState,view}))}catch(e){}};
+
+const M=v=>{const a=Math.abs(v)/1e6; const s=a>=1000?(a/1000).toFixed(2)+"B":a>=100?a.toFixed(0)+"M":a.toFixed(1)+"M"; return (v<0?"−":"")+s};
+const ETB=v=>"ETB "+M(v), X=v=>v==null||!isFinite(v)?"n/a":v.toFixed(2)+"×", pct=(v,dp=1)=>v==null||!isFinite(v)?"n/a":(v*100).toFixed(dp)+"%";
+const n0=v=>Math.round(v).toLocaleString("en-US");
+const Y0=2027;
+
+/* ---------- engine: monthly from Jan 2027, reported by calendar year ---------- */
+function stress(p){
+  const q=Object.assign({},p);
+  q.rentA=p.rentA*(1-p.sRent/100); q.rentB=p.rentB*(1-p.sRent/100);
+  q.occA=Math.max(0,p.occA-p.sOcc); q.occB=Math.max(0,p.occB-p.sOcc);
+  q.cost=p.cost*(1+p.sCost/100); q.buildM=p.buildM+p.sDelay; q.rate=p.rate+p.sRate; q.rateA=p.rateA;
+  q.mce=p.mce*(1-p.sMce/100); q.fxDep=p.sFx; return q;
+}
+function annuity(bal,r,n){return r>0?bal*r/(1-Math.pow(1+r,-n)):bal/n}
+function irr(cf){const f=r=>cf.reduce((s,c,i)=>s+c/Math.pow(1+r,i),0); let lo=-0.9,hi=2,flo=f(lo); if(flo*f(hi)>0) return null; for(let i=0;i<100;i++){const m=(lo+hi)/2,fm=f(m); if(flo*fm<=0)hi=m; else{lo=m;flo=fm}} return (lo+hi)/2}
+function run(p0,worst){
+  const p=worst?stress(p0):p0;
+  const S0=Math.round(p.startM), B=Math.max(1,Math.round(p.buildM)), comp=S0+B, rep=comp+Math.round(p.grace), nRep=Math.round(p.tenor)*12;
+  const years=Math.min(30,Math.ceil((rep+nRep)/12)+1), N=years*12;
+  const fx=m=>p.fx*Math.pow(1+p.fxDep/100,(m+2)/12), ug=m=>Math.pow(1+p.usdGrowth/100,m/12);
+  const area=p.gfa*p.eff/100;
+  // construction cost, S-curve, escalated
+  const base=p.gfa*p.cost*(1+p.cont/100), w=[]; for(let i=0;i<B;i++) w.push(Math.sin(Math.PI*(i+.5)/B)); const ws=w.reduce((a,b)=>a+b,0);
+  const cons=new Array(N).fill(0); for(let i=0;i<B;i++){const m=S0+i; if(m<N) cons[m]=base*w[i]/ws*Math.pow(1+p.infl/100,(m+2)/12)}
+  const consTot=cons.reduce((a,b)=>a+b,0);
+  const mo={rA:[],rB:[],intB:[],intBpaid:[],prinB:[],balB:[],dsA:[],intA:[],balA:[],draw:[],eq:[]};
+  let eqLeft=p.extraCash*1e6, bal=0, pmt=0, balA=p.loanA*1e6, pmtA=annuity(balA,p.rateA/1200,Math.round(p.yrsA)*12), peak=0, peakM=0, capTot=0, payoff=null;
+  for(let m=0;m<N;m++){
+    mo.rA[m]=p.rentA*fx(m)*p.occA/100*ug(m);
+    const ramp=m<comp?0:Math.min(1,(m-comp+1)/Math.max(1,p.leaseUp));
+    mo.rB[m]=area*p.rentB*fx(m)*p.occB/100*ug(m)*ramp;
+    // funding
+    const need=cons[m], e=Math.min(need,eqLeft); eqLeft-=e; mo.eq[m]=e; const dr=need-e; mo.draw[m]=dr;
+    const it=bal*p.rate/1200; mo.intB[m]=it;
+    let paid=0, prin=0;
+    if(m<rep){ if(p.capInt>=0.5){bal+=it; capTot+=it} else paid=it }
+    else { if(m===rep) pmt=annuity(bal,p.rate/1200,nRep); if(bal>1){paid=it; prin=Math.min(bal,pmt-it); bal-=prin; if(bal<=1&&payoff===null) payoff=m} }
+    bal+=dr; mo.intBpaid[m]=paid; mo.prinB[m]=prin; mo.balB[m]=bal; if(bal>peak){peak=bal;peakM=m}
+    // existing loan
+    const iA=balA*p.rateA/1200; let dsA=0; if(balA>1){dsA=Math.min(balA+iA,pmtA); balA=balA+iA-dsA} mo.dsA[m]=dsA; mo.intA[m]=Math.min(iA,dsA); mo.balA[m]=balA;
+  }
+  const depB=consTot/p.depYrs/12;
+  const yr=[], losses=[];
+  for(let y=0;y<years;y++){
+    const sl=a=>a.slice(y*12,y*12+12).reduce((s,v)=>s+v,0);
+    const rA=sl(mo.rA), rB=sl(mo.rB), opex=(rA+rB)*p.opex/100;
+    const intPaid=sl(mo.intBpaid)+sl(mo.intA);
+    let dB=0; for(let m=y*12;m<y*12+12;m++) if(m>=comp) dB+=depB;
+    const pbt=rA+rB-opex-intPaid-p.depA*1e6-dB; let tb=0, lossUsed=0;
+    if(pbt<0){ if(p.lossCF<0.5) losses.push({a:-pbt,y}) }
+    else { tb=pbt; if(p.lossCF<0.5) for(const L of losses){ if(y-L.y>5||L.a<=0) continue; const u=Math.min(L.a,tb); L.a-=u; tb-=u; lossUsed+=u } }
+    const tax=tb*p.tax/100;
+    const net=rA+rB-opex-tax, shareA=rA+rB>0?rA/(rA+rB):1;
+    const mce=p.mce*1e6*Math.pow(1+p.mceGrowth/100,y);
+    const dsB=sl(mo.intBpaid)+sl(mo.prinB), dsA=sl(mo.dsA), ds=dsB+dsA;
+    const cfads=net+mce;
+    yr.push({y:Y0+y,rA,rB,opex,tax,pbt,lossUsed,taxable:tb,dep:p.depA*1e6+dB,intPaid,netA:net*shareA,netB:net*(1-shareA),net,mce,cfads,intB:sl(mo.intBpaid),prinB:sl(mo.prinB),dsA,ds,
+      cover:ds>1e5?cfads/ds:null, propCover:ds>1e5?net/ds:null, balB:mo.balB[y*12+11], balA:mo.balA[y*12+11]});
+  }
+  let cum=0; yr.forEach(o=>{cum+=o.cfads-o.ds; o.cum=cum});
+  let cumB=0, consCum=0; const cashIn=(p.land+p.extraCash)*1e6;
+  yr.forEach((o,y)=>{const mEnd=y*12+11; for(let m=y*12;m<=mEnd;m++) consCum+=cons[m]||0;
+    const v=mEnd<comp? p.land*1e6+consCum : area*p.rentB*12*fx(mEnd)*p.occB/100*ug(mEnd)*(1-p.opex/100)/(p.exitYield/100);
+    cumB+=o.netB-o.intB-o.prinB; o.valB=v; o.cumB=cumB; o.nw=v-o.balB+cumB; o.alt=cashIn*Math.pow(1+p.depRate/100,(mEnd+1)/12); o.fxE=fx(mEnd); o.nwU=o.nw/o.fxE; o.altU=o.alt/o.fxE});
+  let minC=Infinity,minY=null; yr.forEach(o=>{if(o.cover!=null&&o.cover<minC){minC=o.cover;minY=o.y}});
+  const stabM=comp+Math.max(1,p.leaseUp), stabY=Y0+Math.ceil(stabM/12);
+  let minP=Infinity,minPY=null; yr.forEach(o=>{if(o.y>=stabY&&o.propCover!=null&&o.propCover<minP){minP=o.propCover;minPY=o.y}});
+  // Building B value and yield
+  const sNet=area*p.rentB*12*fx(stabM)*p.occB/100*ug(stabM)*(1-p.opex/100);
+  const totB=p.land*1e6+consTot+capTot;
+  const valB=sNet/(p.exitYield/100);
+  // unlevered Building B IRR over horizon with sale at valuation yield
+  const cf=[-p.land*1e6]; for(let y=0;y<years;y++){cf[y]=(cf[y]||0)-cons.slice(y*12,y*12+12).reduce((a,b)=>a+b,0)+yr[y].rB*(1-p.opex/100)}
+  cf[years-1]+=yr[years-1].rB*(1-p.opex/100)*(1+p.usdGrowth/100)*(1+p.fxDep/100)/(p.exitYield/100);
+  return {cashIn,apprec:(1+p.usdGrowth/100)*(1+p.fxDep/100)-1,p,yr,N,comp,rep,years,minC:isFinite(minC)?minC:null,minY,minP:isFinite(minP)?minP:null,minPY,stabY,peak,peakY:Y0+Math.floor(peakM/12),
+    payoffY:payoff==null?null:Y0+Math.floor(payoff/12),consTot,capTot,totB,valB,sNet,area,yieldOnCost:sNet/totB,irrB:irr(cf),
+    ltv:peak/(p.valA*1e6+valB), loanAtComp:mo.balB[Math.min(N-1,rep)], compY:Y0+Math.floor(comp/12), compMo:comp%12, endCum:cum, mo};
+}
+const verdict=(c,min)=>c==null?"go":c>=min?"go":c>=1?"warn":"stop";
+const LBL={go:"GO",warn:"TIGHT",stop:"NO GO"};
+
+/* ---------- inputs ---------- */
+const $=id=>document.getElementById(id), els={}, subs={};
+DEF.forEach(d=>{
+  let host;
+  if(d.g==="build") host=$("f_build"); else if(d.g==="fund") host=$("f_fund");
+  else{ if(!subs[d.s]){const det=document.createElement("details"); det.className="sub"+(d.w?" worst":""); det.id="d_"+d.s.replace(/\W+/g,"_"); det.innerHTML=`<summary>${d.s}</summary><div class="fields"></div>`; $("subs").appendChild(det); subs[d.s]=det}
+    host=subs[d.s].querySelector(".fields") }
+  const f=document.createElement("div"); f.className="field"; const tip=TIPS[d.id]||d.h; if(tip) f.dataset.tip=tip;
+  if(d.seg){
+    f.innerHTML=`<label>${d.l}</label><div class="seg" role="group" aria-label="${d.l}">${d.seg.map((t,i)=>`<button type="button" data-v="${i}">${t}</button>`).join("")}</div>`;
+    host.appendChild(f); const bs=[...f.querySelectorAll("button")];
+    els[d.id]={seg:bs}; bs.forEach(b=>b.onclick=()=>{P[d.id]=+b.dataset.v; sync(d.id); update()});
+    return;
+  }
+  f.innerHTML=`<div class="field-top"><label for="n_${d.id}">${d.l}</label><span class="numbox"><input id="n_${d.id}" type="number" inputmode="decimal" step="${d.st}"><span class="u">${d.u}</span></span></div><input id="r_${d.id}" type="range" min="${d.min}" max="${d.max}" step="${d.st}" aria-label="${d.l}">`;
+  host.appendChild(f);
+  const n=f.querySelector("input[type=number]"), r=f.querySelector("input[type=range]"); els[d.id]={n,r};
+  const set=v=>{v=parseFloat(v); if(!isFinite(v)) return; P[d.id]=v; sync(d.id); update()};
+  n.addEventListener("change",e=>set(e.target.value)); r.addEventListener("input",e=>set(e.target.value));
+});
+function sync(id){const e=els[id]; if(e.seg){e.seg.forEach(b=>b.setAttribute("aria-pressed",+b.dataset.v===P[id]))} else {e.n.value=+(+P[id]).toFixed(4); e.r.value=P[id]}}
+document.querySelectorAll("details[data-remember], .sub").forEach(d=>{if(d.id in openState) d.open=openState[d.id]; d.addEventListener("toggle",()=>{openState[d.id]=d.open; save()})});
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view; update()});
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+let loanView=openState.loanView||"chart", loanPer=+(openState.loanPer||1), lastR=null;
+function setLoanCtrls(){document.querySelectorAll("#loanView button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===loanView)); document.querySelectorAll("#loanPer button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.v===loanPer)); $("loanPer").hidden=loanView!=="table"; $("loanChartWrap").hidden=loanView!=="chart"; $("loanTableWrap").hidden=loanView!=="table"}
+document.querySelectorAll("#loanView button").forEach(b=>b.onclick=()=>{loanView=b.dataset.v; openState.loanView=loanView; save(); setLoanCtrls()});
+document.querySelectorAll("#loanPer button").forEach(b=>b.onclick=()=>{loanPer=+b.dataset.v; openState.loanPer=loanPer; save(); setLoanCtrls(); if(lastR) drawLoanTable(lastR)});
+setLoanCtrls();
+$("resetBtn").onclick=()=>{DEF.forEach(d=>{P[d.id]=d.d; sync(d.id)}); view="base"; update()};
+
+/* ---------- render ---------- */
+function update(){
+  save();
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===view));
+  const rb=run(P,false), rw=run(P,true), r=view==="worst"?rw:rb, other=view==="worst"?rb:rw, p=r.p;
+  const v=verdict(r.minC,p.minCover), vo=verdict(other.minC,p.minCover);
+  $("hero").className="hero "+v; ["chip","miniChip"].forEach(id=>{$(id).className="chip "+v; $(id).textContent=LBL[v]});
+  $("viewing").hidden=view!=="worst";
+  $("heroLabel").textContent=`Lowest debt cover in any year${r.minY?", "+r.minY:""}`;
+  $("heroFig").innerHTML=`${r.minC==null?"n/a":r.minC.toFixed(2)}<span class="unit">× loan payments</span>`;
+  $("miniFig").textContent=`${X(r.minC)} lowest cover`;
+  $("miniSub").textContent=`${view==="worst"?"Worst case":"Base case"} · peak loan ${ETB(r.peak)}`;
+  const reliance=r.minP==null?"":r.minP>=p.minCover?` Once Building B is fully rented, rental income from the two buildings alone covers the debt ${X(r.minP)}, so MCE's cash is a safety margin rather than a necessity.`:r.minP>=1?` Once Building B is fully rented, rental income from the two buildings alone covers only ${X(r.minP)}, so MCE's cash is needed to meet the bank's minimum.`:` Once Building B is fully rented, rental income from the two buildings alone covers only ${X(r.minP)} of loan payments, so repayment depends on MCE's operating cash.`;
+  const head={go:`Income covers loan payments at least ${X(r.minC)} in every year, above the bank's ${X(p.minCover)} minimum.`,warn:`Every payment can be met, but cover dips to ${X(r.minC)} in ${r.minY}, below the bank's ${X(p.minCover)} minimum. Expect the bank to ask for more security or a longer term.`,stop:`In ${r.minY} income covers only ${X(r.minC)} of loan payments. MCE would need extra cash or a restructured loan that year.`}[v];
+  $("heroLine").textContent=head+reliance;
+  $("alt").innerHTML=`<span class="chip sm ${vo}">${LBL[vo]}</span><span>${view==="worst"?"Base case":"Worst case"}: lowest cover <b>${X(other.minC)}</b>${other.minY?" in "+other.minY:""}, peak loan <b>${ETB(other.peak)}</b>, repaid by <b>${other.payoffY??"after horizon"}</b>.</span>`;
+  const kp=[["Peak bank loan",ETB(r.peak),`Repaid by ${r.payoffY??"after horizon"}`],["Buildings alone",X(r.minP),`Lowest cover from ${r.stabY}, without MCE cash`],["Building B yield on cost",pct(r.yieldOnCost),`Net rent on ${ETB(r.totB)} total cost`]];
+  $("kpis").innerHTML=kp.map((k,i)=>`<div class="kpi" data-tip="${KTIPS[i]}"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="s">${k[2]}</div></div>`).join("");
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const dg=[
+    ["Completion",`${months[r.compMo]} ${r.compY}`,`Repayments start ${months[r.rep%12]} ${Y0+Math.floor(r.rep/12)}`],
+    ["Construction cost",ETB(r.consTot),"Inflated, with contingency"],
+    ["Interest added to loan",ETB(r.capTot),p.capInt>=.5?"During construction":"None, paid from income"],
+    ["Building B total cost",ETB(r.totB),"Land, construction, added interest"],
+    ["Building B value on completion",ETB(r.valB),`At ${p.exitYield}% yield, ${pct(r.valB/r.totB-1,0)} vs cost`],
+    ["Loan to value at peak",pct(r.ltv,0),"Against both buildings"],
+    ["Building B return",pct(r.irrB),"Unlevered IRR in birr, before tax"],
+    ["Cumulative surplus",ETB(r.endCum),`After all loan payments to ${Y0+r.years-1}`],
+    ["Annual loan instalment",ETB(r.yr.find(o=>o.y===Y0+Math.floor(r.rep/12)+1)?.ds||0),"First full repayment year"]
+  ];
+  $("detailGrid").innerHTML=dg.map((x,i)=>`<div class="dg" data-tip="${DGTIPS[i]||""}"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join("");
+  $("derived").innerHTML=`Rentable area <b>${n0(r.area)} m²</b>. Construction <b>${ETB(P.gfa*P.cost)}</b> at today's prices. Cash in: <b>${ETB((P.land+P.extraCash)*1e6)}</b>.`;
+  $("g_cover").textContent=`Lowest ${X(r.minC)} in ${r.minY}`;
+  loanSummary(r); lastR=r;
+  $("g_table").textContent=`${r.years} years, ETB millions`;
+  const ph=r.yr.map((o,i)=>({o,build:i*12+11<r.rep}));
+  const minOf=a=>a.reduce((m,x)=>x.o.cover!=null&&(m==null||x.o.cover<m.o.cover)?x:m,null);
+  const pc=minOf(ph.filter(x=>x.build)), pr=minOf(ph.filter(x=>!x.build)), bindB=!!pc&&(!pr||pc.o.cover<=pr.o.cover);
+  $("phases").innerHTML=[["While building",pc,bindB,"Years before principal repayments start, including the grace period. Only interest is paid, and until completion Building B earns no rent."],["While repaying",pr,!bindB,"Years when both interest and principal are repaid and Building B is earning rent."]].map(([l,x,b,t])=>`<div class="phase${b?" bind":""}" data-tip="${t}"><div class="l">${l}</div><b>${x?X(x.o.cover):"n/a"}</b> <span class="s">${x?"lowest, "+x.o.y:""}</span></div>`).join("")+`<p class="phase-note">${bindB?"The tightest year falls while Building B is still being built, when interest is due but it earns no rent. Its rent, occupancy and loan term cannot improve that year. MCE's cash, the interest rate, construction cost, build time and adding interest to the loan can.":"The tightest year falls once repayments have started, so Building B's rent, occupancy and the loan term all move this figure."}</p>`;
+  drawEcon(r);
+  drawCover(r); drawLoan(r); drawTornado(r); drawTable(r); drawPL(r);
+}
+function drawEcon(r){
+  const p=r.p, h=Math.min(r.yr.length-1,Math.round(p.horizon)-1), o=r.yr[h];
+  const lev=r.yieldOnCost+r.apprec, spread=lev-p.rate/100, better=o.nwU>o.altU;
+  const v=better?(spread>=0?"go":"warn"):"stop";
+  const c=$("econChip"); c.className="chip "+v; c.textContent={go:"GO",warn:"MIXED",stop:"NO GO"}[v];
+  const U=x=>"USD "+(x/1e6).toFixed(1)+"M";
+  $("econLabel").textContent=`Net wealth from Building B by ${o.y}, in US dollars`;
+  $("econFig").innerHTML=`${(o.nwU/1e6).toFixed(1)}<span class="unit">USD M</span>`;
+  $("econLine").textContent=better?`Against ${U(o.altU)} if the same ${ETB(r.cashIn)} sat in a birr deposit at ${p.depRate}%. Turning birr into a dollar-earning building ${o.nwU>o.altU*1.5?"protects and grows the money":"does better, but not by a wide margin"}.`:`Keeping the same ${ETB(r.cashIn)} in a birr deposit at ${p.depRate}% would be worth ${U(o.altU)}, more than Building B leaves after its loan.`;
+  $("econLev").innerHTML=`Building earns <b>${pct(lev)}</b> a year in birr (${pct(r.yieldOnCost)} rent yield plus ${pct(r.apprec)} value growth) against <b>${p.rate}%</b> loan cost. ${spread>=0?"Each birr borrowed adds value.":better?"Each birr borrowed costs more than it earns, so the gain comes from building below market value, not from the loan.":"Each birr borrowed costs more than it earns."}`;
+  const ys=r.yr, W=420, H=150, pl=40, pt=10, pb=20, n=ys.length;
+  const vals=ys.flatMap(x=>[x.nwU,x.altU]), lo=Math.min(0,...vals), hi=Math.max(...vals)*1.08||1;
+  const xs=i=>pl+i/(n-1)*(W-pl-10), ysc=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Wealth from Building B against a birr deposit, US dollars">`;
+  for(let i=0;i<=3;i++){const val=lo+(hi-lo)*i/3; s+=`<line x1="${pl}" x2="${W-10}" y1="${ysc(val)}" y2="${ysc(val)}" stroke="var(--silver)"/><text x="${pl-5}" y="${ysc(val)+3}" text-anchor="end">${(val/1e6).toFixed(1)}M</text>`}
+  if(lo<0) s+=`<line x1="${pl}" x2="${W-10}" y1="${ysc(0)}" y2="${ysc(0)}" stroke="var(--silver-2)"/>`;
+  s+=`<polyline fill="none" stroke="var(--faint)" stroke-width="2" stroke-dasharray="4 3" points="${ys.map((x,i)=>`${xs(i)},${ysc(x.altU)}`).join(" ")}"/>`;
+  s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.4" points="${ys.map((x,i)=>`${xs(i)},${ysc(x.nwU)}`).join(" ")}"/>`;
+  s+=`<line x1="${xs(h)}" x2="${xs(h)}" y1="${pt}" y2="${H-pb}" stroke="var(--silver-2)" stroke-dasharray="2 3"/><circle cx="${xs(h)}" cy="${ysc(o.nwU)}" r="4" fill="var(--accent)"/><circle cx="${xs(h)}" cy="${ysc(o.altU)}" r="3.5" fill="var(--faint)"/>`;
+  for(let i=0;i<n;i+=Math.ceil(n/6)) s+=`<text x="${xs(i)}" y="${H-5}" text-anchor="middle">${ys[i].y}</text>`;
+  $("econChart").innerHTML=s+"</svg>";
+}
+function loanSummary(r){
+  const mo=r.mo, p=r.p, m0=r.rep, pay=m0<r.N?mo.intBpaid[m0]+mo.prinB[m0]:0, start=`${MN[m0%12]} ${Y0+Math.floor(m0/12)}`;
+  let pk=0; for(let m=0;m<Math.min(m0,r.N);m++) pk=Math.max(pk,mo.intB[m]);
+  let endA=-1; for(let m=0;m<r.N;m++) if(mo.dsA[m]>1) endA=m;
+  const mm=v=>`ETB ${(v/1e6).toFixed(2)}M`;
+  $("loanSum").innerHTML=`From <b>${start}</b> the Building B loan is repaid at <b>${mm(pay)} a month</b>, or <b>${mm(pay*3)} a quarter</b>, for ${p.tenor} years. Before that only interest runs, rising to about ${mm(pk)} a month near completion, ${p.capInt>=.5?"added to the loan rather than paid":"paid from income"}.${endA>=0?` The existing building's loan adds ${mm(mo.dsA[0])} a month until ${MN[endA%12]} ${Y0+Math.floor(endA/12)}.`:""}`;
+  $("g_loan").textContent=`${mm(pay)} a month from ${start}`;
+  drawLoanTable(r);
+}
+function drawLoanTable(r){
+  const mo=r.mo, N=r.N, k=loanPer; let last=N-1;
+  while(last>0&&mo.balB[last]<1&&mo.balA[last]<1&&mo.dsA[last]<1&&mo.prinB[last]<1&&mo.draw[last]<1) last--;
+  last=Math.min(N-1,last+1);
+  const dp=k===12?1:2, f=v=>Math.abs(v)<500?"·":(v/1e6).toFixed(dp);
+  const H=[[k===1?"Month":k===3?"Quarter":"Year",""],["Stage","Building: construction under way. Grace: building finished, interest only. Repaying: equal instalments of interest and principal."],["Opening balance","Building B loan owed at the start of the period."],["Drawn","New borrowing in the period to pay the contractor."],["Interest","Interest charged on the Building B loan in the period. During construction it is paid or added to the loan, depending on the Bank terms setting."],["Principal","Part of the payment that reduces the loan."],["Paid on B loan","Cash paid to the bank on the Building B loan: interest paid plus principal."],["Closing balance","Building B loan owed at the end of the period."],["Existing loan","Payment on the existing building's remaining loan."],["Total to banks","Everything paid to the banks in the period."]];
+  let h=`<table><thead><tr>${H.map(([t,tip])=>`<th${tip?` data-tip="${tip}"`:""}>${t}</th>`).join("")}</tr></thead><tbody>`;
+  for(let s=0;s<=last;s+=k){const e=Math.min(last,s+k-1), sum=a=>{let t=0; for(let m=s;m<=e;m++) t+=a[m]; return t};
+    const open=s===0?0:mo.balB[s-1], pr=sum(mo.prinB), paid=sum(mo.intBpaid)+pr, ea=sum(mo.dsA), y=Y0+Math.floor(s/12);
+    const lab=k===1?`${MN[s%12]} ${y}`:k===3?`Q${Math.floor((s%12)/3)+1} ${y}`:`${y}`;
+    const st=e<r.comp?"Building":e<r.rep?"Grace":open<1&&pr<1?"Repaid":"Repaying";
+    h+=`<tr><td>${lab}</td><td class="stage">${st}</td><td>${f(open)}</td><td>${f(sum(mo.draw))}</td><td>${f(sum(mo.intB))}</td><td>${f(pr)}</td><td><b>${f(paid)}</b></td><td>${f(mo.balB[e])}</td><td>${f(ea)}</td><td><b>${f(paid+ea)}</b></td></tr>`}
+  $("loanTable").innerHTML=h+"</tbody></table>";
+}
+function drawPL(r){
+  const ys=r.yr, f=v=>Math.abs(v)<5e3?"·":(v/1e6).toFixed(1);
+  const rows=[["Rent, existing building",o=>o.rA],["Rent, Building B",o=>o.rB],["Running costs",o=>-o.opex],["Depreciation",o=>-o.dep],["Interest",o=>-o.intPaid],["Profit before tax",o=>o.pbt,"tot"],["Losses used",o=>-o.lossUsed],["Taxable profit",o=>o.taxable],["Profit tax",o=>-o.tax],["Net profit",o=>o.pbt-o.tax,"tot"]];
+  let h=`<table><thead><tr><th>ETB M</th>${ys.map(o=>`<th>${o.y}</th>`).join("")}<th>Total</th></tr></thead><tbody>`;
+  rows.forEach(([l,fn,t])=>{let s=0; h+=`<tr${t?' class="tot"':""}><td${ROWTIP[l]?` data-tip="${ROWTIP[l]}"`:""}>${l}</td>${ys.map(o=>{const v=fn(o); s+=v; return `<td class="${v<-5e3?"neg":""}">${f(v)}</td>`}).join("")}<td class="${s<-5e3?"neg":""}">${f(s)}</td></tr>`});
+  $("plTable").innerHTML=h+"</tbody></table>";
+  const tt=ys.reduce((a,o)=>a+o.tax,0), np=ys.reduce((a,o)=>a+o.pbt-o.tax,0);
+  $("g_pl").textContent=`Tax ${M(tt)}, net profit ${M(np)} over ${ys.length} years`;
+}
+
+function drawCover(r){
+  const ys=r.yr, n=ys.length, bw=42, pl=50, W=pl+n*bw+10, H=250, pt=12, pb=44;
+  const mx=Math.max(...ys.map(o=>Math.max(o.ds,Math.max(0,o.netA)+Math.max(0,o.netB)+o.mce)))*1.05||1;
+  const y=v=>pt+(1-v/mx)*(H-pt-pb), min=r.p.minCover;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Income against loan payments by year">`;
+  for(let i=0;i<=4;i++){const v=mx*i/4; s+=`<line x1="${pl}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="var(--silver)"/><text x="${pl-6}" y="${y(v)+3}" text-anchor="end">${M(v)}</text>`}
+  ys.forEach((o,i)=>{const x=pl+i*bw+7, bwi=bw-14; let top=y(0);
+    [[Math.max(0,o.netA),"var(--c-a)","Existing building"],[Math.max(0,o.netB),"var(--c-b)","Building B"],[o.mce,"var(--c-mce)","MCE cash"]].forEach(([v,c,l])=>{const h=(H-pt-pb)*v/mx; if(h>0){top-=h; s+=`<rect x="${x}" y="${top}" width="${bwi}" height="${h}" fill="${c}"><title>${o.y} ${l}: ${ETB(v)}</title></rect>`}});
+    s+=`<text x="${x+bwi/2}" y="${H-pb+14}" text-anchor="middle">${o.y}</text>`;
+    const c=o.cover; s+=`<text x="${x+bwi/2}" y="${H-pb+30}" text-anchor="middle" style="font-weight:700;fill:${c==null?"var(--faint)":c<1?"var(--stop)":c<min?"var(--warn)":"var(--go)"}">${c==null?"·":c.toFixed(1)+"×"}</text>`});
+  s+=`<polyline fill="none" stroke="var(--c-ds)" stroke-width="2.2" points="${ys.map((o,i)=>`${pl+i*bw+bw/2},${y(o.ds)}`).join(" ")}"/>`;
+  ys.forEach((o,i)=>{if(o.ds>0) s+=`<circle cx="${pl+i*bw+bw/2}" cy="${y(o.ds)}" r="2.6" fill="var(--c-ds)"><title>${o.y} loan payments: ${ETB(o.ds)}</title></circle>`});
+  $("coverChart").innerHTML=s+"</svg>";
+}
+function drawLoan(r){
+  const N=r.N, W=Math.max(560,N*3+60), H=200, pl=50, pt=12, pb=24, mo=r.mo;
+  const mx=Math.max(...mo.balB.map((b,i)=>b+mo.balA[i]))*1.05||1, x=m=>pl+m/(N-1)*(W-pl-10), y=v=>pt+(1-v/mx)*(H-pt-pb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Loan balance">`;
+  for(let i=0;i<=4;i++){const v=mx*i/4; s+=`<line x1="${pl}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="var(--silver)"/><text x="${pl-6}" y="${y(v)+3}" text-anchor="end">${M(v)}</text>`}
+  const area=(f,c)=>`<path d="M${x(0)},${y(0)} ${mo.balB.map((_,m)=>`L${x(m)},${y(f(m))}`).join(" ")} L${x(N-1)},${y(0)} Z" fill="${c}"/>`;
+  s+=area(m=>mo.balB[m]+mo.balA[m],"var(--c-a)")+area(m=>mo.balB[m],"var(--accent)");
+  for(let yy=0;yy<N/12;yy+=2) s+=`<text x="${x(yy*12)}" y="${H-6}" text-anchor="middle">${Y0+yy}</text>`;
+  $("loanChart").innerHTML=s+"</svg>";
+}
+function drawTornado(r){
+  const p=P, worst=view==="worst";
+  const flex=[["Building B rent ±20%","rentB","p",20],["Construction cost ±20%","cost","p",20],["Bank interest ±4 pts","rate","a",4],["MCE cash ±30%","mce","p",30],["Occupancy ±10 pts","occB","a",10],["Loan term ±3 years","tenor","a",3],["Construction period ±9 months","buildM","a",9],["Birr depreciation ±4 pts","fxDep","a",4]];
+  const floor={tenor:2,buildM:6,fxDep:0,occB:20};
+  const rows=flex.map(([lab,id,k,a])=>{const at=sg=>{const q=Object.assign({},p); if(id==="occB"){q.occB=Math.min(100,Math.max(20,p.occB+sg*a)); q.occA=Math.min(100,Math.max(20,p.occA+sg*a))} else q[id]=k==="p"?p[id]*(1+sg*a/100):Math.max(floor[id]??0,p[id]+sg*a); return run(q,worst).minC}; return {lab,lo:at(-1),hi:at(1)}});
+  rows.forEach(o=>o.span=Math.abs((o.hi??0)-(o.lo??0))); rows.sort((a,b)=>b.span-a.span);
+  $("g_sens").textContent=`Biggest driver: ${rows[0].lab.replace(/ ±.*/,"").toLowerCase()}`;
+  const base=r.minC??0, vals=rows.flatMap(o=>[o.lo,o.hi]).concat([base,p.minCover,1]).filter(v=>v!=null);
+  const lo=Math.max(0,Math.min(...vals)*0.95), hi=Math.max(...vals)*1.03, W=600, lw=190, rh=28, H=rows.length*rh+34, xs=v=>lw+(v-lo)/(hi-lo||1)*(W-lw-40);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:${W}px" role="img" aria-label="Sensitivity of lowest cover">`;
+  s+=`<line x1="${xs(base)}" x2="${xs(base)}" y1="2" y2="${H-24}" stroke="var(--ink)"/><line x1="${xs(p.minCover)}" x2="${xs(p.minCover)}" y1="2" y2="${H-24}" stroke="var(--warn)" stroke-dasharray="4 3"/>`;
+  rows.forEach((o,i)=>{const yy=4+i*rh; s+=`<text x="0" y="${yy+15}" style="font-size:11px;fill:var(--ink)">${o.lab}</text>`;
+    [o.lo,o.hi].forEach(v=>{if(v==null) return; const a=Math.min(xs(v),xs(base)), w=Math.abs(xs(v)-xs(base)); s+=`<rect x="${a}" y="${yy+4}" width="${Math.max(1,w)}" height="${rh-12}" rx="3" fill="${v<base?"var(--stop)":"var(--go)"}" opacity=".55"><title>${X(v)}</title></rect>`});
+    const mn=Math.min(o.lo??base,o.hi??base), mxv=Math.max(o.lo??base,o.hi??base); s+=`<text x="${xs(mn)-4}" y="${yy+15}" text-anchor="end">${mn.toFixed(2)}×</text><text x="${xs(mxv)+4}" y="${yy+15}">${mxv.toFixed(2)}×</text>`});
+  s+=`<text x="${xs(base)}" y="${H-8}" text-anchor="middle" style="fill:var(--ink);font-weight:700">Now ${X(base)}</text><text x="${xs(p.minCover)}" y="${H-8}" text-anchor="${p.minCover<base?"end":"start"}" dx="${p.minCover<base?-30:30}" style="fill:var(--warn)">Bank minimum ${X(p.minCover)}</text></svg>`;
+  $("tornado").innerHTML=s;
+}
+function drawTable(r){
+  const ys=r.yr, f=v=>Math.abs(v)<5e3?"·":(v/1e6).toFixed(1), min=r.p.minCover;
+  const rows=[["Rent, existing building",o=>o.rA],["Rent, Building B",o=>o.rB],["Running costs",o=>-o.opex],["Profit tax",o=>-o.tax],["MCE operating cash",o=>o.mce],["Cash available",o=>o.cfads,"tot"],["Interest, Building B loan",o=>-o.intB],["Principal, Building B loan",o=>-o.prinB],["Existing building loan",o=>-o.dsA],["Loan payments",o=>-o.ds,"tot"],["Cover",o=>o.cover,"x"],["Cover, buildings alone",o=>o.propCover,"x"],["Building B loan, year end",o=>o.balB],["Cumulative surplus",o=>o.cum]];
+  let h=`<table><thead><tr><th>ETB M</th>${ys.map(o=>`<th>${o.y}</th>`).join("")}</tr></thead><tbody>`;
+  rows.forEach(([l,fn,t])=>{h+=`<tr${t==="tot"?' class="tot"':""}><td${ROWTIP[l]?` data-tip="${ROWTIP[l]}"`:""}>${l}</td>${ys.map(o=>{const v=fn(o); if(t==="x") return `<td class="${v==null?"":v<1?"low":v<min?"mid":""}">${v==null?"·":v.toFixed(2)+"×"}</td>`; return `<td class="${v<-5e3?"neg":""}">${f(v)}</td>`}).join("")}</tr>`});
+  $("annual").innerHTML=h+"</tbody></table>";
+}
+(function(){const tip=document.createElement("div"); tip.className="tip"; tip.setAttribute("role","tooltip"); document.body.appendChild(tip); let cur=null, timer=null;
+  const show=el=>{const t=el.dataset.tip; if(!t) return; tip.textContent=t; tip.classList.add("on"); const r=el.getBoundingClientRect(), tw=tip.offsetWidth, th=tip.offsetHeight, vw=document.documentElement.clientWidth, vh=window.innerHeight; let x=Math.min(Math.max(12,r.left),vw-tw-12), y=r.bottom+8; if(y+th>vh-8) y=Math.max(8,r.top-th-8); tip.style.left=x+"px"; tip.style.top=y+"px"};
+  const hide=()=>{clearTimeout(timer); cur=null; tip.classList.remove("on")};
+  document.addEventListener("pointerover",e=>{const el=e.target.closest("[data-tip]"); if(el===cur) return; hide(); if(!el||!el.dataset.tip) return; cur=el; timer=setTimeout(()=>show(el),e.pointerType==="touch"?0:300)});
+  document.addEventListener("focusin",e=>{const el=e.target.closest("[data-tip]"); hide(); if(el){cur=el; show(el)}});
+  document.addEventListener("pointerdown",e=>{if(e.target.type==="range") hide()});
+  window.addEventListener("scroll",hide,{passive:true});
+})();
+try{const io=new IntersectionObserver(([e])=>{$("mini").classList.toggle("show",!e.isIntersecting&&e.boundingClientRect.top<0)}); io.observe($("hero"))}catch(e){}
+DEF.forEach(d=>sync(d.id)); update();
+})();
+</script>
+
+</body></html>

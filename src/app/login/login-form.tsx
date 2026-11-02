@@ -1,0 +1,124 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+const REMEMBER = "mce-gate-details";
+
+async function post(url: string, body: unknown) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, data };
+}
+
+const prettyPhone = (p: string) => p.replace(/^251(\d{2})(\d{3})(\d{4})$/, "+251 $1 $2 $3");
+
+export default function LoginForm() {
+  const [step, setStep] = useState<"details" | "code">("details");
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [phone, setPhone] = useState("");
+  const [sentTo, setSentTo] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [devMode, setDevMode] = useState(false);
+  const [wait, setWait] = useState(0);
+  const codeRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // If an expired session lands the login page inside the app frame, take over the whole window.
+    if (window.top && window.top !== window.self) window.top.location.href = "/login";
+    try {
+      const s = JSON.parse(localStorage.getItem(REMEMBER) || "null");
+      // Prefill from the last sign-in on this device (browser-only, so it must run after mount).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (s) { setName(s.name || ""); setCompany(s.company || ""); setPhone(s.phone || ""); }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait(w => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
+
+  useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
+
+  async function requestCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    setError(""); setBusy(true);
+    const { ok, data } = await post("/api/auth/request-otp", { name, company, phone });
+    setBusy(false);
+    if (!ok) {
+      setError(data.error || "Something went wrong. Try again.");
+      if (data.retryAfter) setWait(data.retryAfter);
+      return;
+    }
+    try { localStorage.setItem(REMEMBER, JSON.stringify({ name, company, phone })); } catch {}
+    setSentTo(data.phone); setDevMode(!!data.devMode); setCode(""); setWait(60); setStep("code");
+  }
+
+  async function verify(e: React.FormEvent) {
+    e.preventDefault();
+    setError(""); setBusy(true);
+    const { ok, data } = await post("/api/auth/verify-otp", { phone: sentTo, code });
+    if (!ok) { setBusy(false); setError(data.error || "Something went wrong. Try again."); return; }
+    window.location.replace("/");
+  }
+
+  if (step === "code") {
+    return (
+      <>
+        <div>
+          <h1>Enter your code</h1>
+          <p className="lead" style={{ marginTop: 6 }}>We sent a 6-digit code by SMS to <b>{prettyPhone(sentTo)}</b>.</p>
+        </div>
+        {devMode && <p className="note">Development mode: no SMS key is set, so the code is printed in the server terminal.</p>}
+        <form className="form" onSubmit={verify}>
+          <input
+            ref={codeRef} className="input code" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+            aria-label="Verification code" aria-invalid={!!error} value={code}
+            onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          />
+          {error && <p className="err" role="alert">{error}</p>}
+          <button className="btn" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Verify and continue"}</button>
+          <div className="row">
+            <button type="button" className="link" onClick={() => { setStep("details"); setError(""); }}>Change details</button>
+            <button type="button" className="link" disabled={busy || wait > 0} onClick={() => requestCode()}>
+              {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
+            </button>
+          </div>
+        </form>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div>
+        <h1>Sign in</h1>
+        <p className="lead" style={{ marginTop: 6 }}>Enter your details. We will text you a code to confirm your number.</p>
+      </div>
+      <form className="form" onSubmit={requestCode}>
+        <div className="field">
+          <label htmlFor="name">Full name</label>
+          <input id="name" className="input" autoComplete="name" required minLength={2} maxLength={80} value={name} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="company">Company</label>
+          <input id="company" className="input" autoComplete="organization" required minLength={2} maxLength={120} value={company} onChange={e => setCompany(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="phone">Mobile number</label>
+          <div className="phone">
+            <span className="cc">+251</span>
+            <input id="phone" className="input" type="tel" inputMode="tel" autoComplete="tel-national" required placeholder="9X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} />
+          </div>
+          <span className="help">Ethio Telecom (09…) or Safaricom (07…) number.</span>
+        </div>
+        {error && <p className="err" role="alert">{error}</p>}
+        <button className="btn" disabled={busy || wait > 0}>{busy ? "Sending code…" : wait > 0 ? `Wait ${wait}s` : "Send code"}</button>
+      </form>
+    </>
+  );
+}

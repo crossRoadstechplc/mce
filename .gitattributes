@@ -1,0 +1,2 @@
+# Keep the original feasibility app byte-for-byte identical
+protected/feasibility.html -text
