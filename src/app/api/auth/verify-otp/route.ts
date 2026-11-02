@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const v = await verifyOtp(phone, code);
   if (!v.ok) return NextResponse.json({ error: v.error }, { status: 401 });
 
-  const { token, expires } = await startSession(phone, v.name, v.company, clientFrom(req));
+  const { token, expires } = await startSession(phone, clientFrom(req));
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

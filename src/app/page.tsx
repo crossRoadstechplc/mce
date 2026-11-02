@@ -4,10 +4,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { formatEthPhone } from "@/lib/phone";
 import LogoutButton from "./logout-button";
 import AdminPopup from "./admin-popup";
+import AppFrame from "./app-frame";
+import { LoadingScreen } from "./loader";
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="loading">Loading…</div>}>
+    <Suspense fallback={<LoadingScreen label="Checking your session…" />}>
       <Gate />
     </Suspense>
   );
@@ -24,13 +26,13 @@ async function Gate() {
       <header className="bar">
         <span className="brand">MCE Real Estate · Feasibility</span>
         <span className="who" title={`${formatEthPhone(user.phone)} · ${last}`}>
-          <b>{user.name}</b>
-          <span className="co"> · {user.company}</span>
+          <b>{user.name || formatEthPhone(user.phone)}</b>
+          {user.company && <span className="co"> · {user.company}</span>}
         </span>
         <LogoutButton />
       </header>
       {/* The original app, unchanged, served only to signed-in users. */}
-      <iframe className="frame" src="/feasibility" title="MCE Residential Feasibility" />
+      <AppFrame />
       <AdminPopup />
     </div>
   );

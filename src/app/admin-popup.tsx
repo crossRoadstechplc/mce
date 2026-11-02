@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Spinner } from "./loader";
 
 type User = { name: string; company: string; phone: string; login_count: number; created_at: string; last_login_at: string | null; last_logout_at: string | null };
 type Event = { at: string; event: "login" | "logout"; name: string; company: string; phone: string; ip: string | null; user_agent: string | null };
@@ -61,6 +62,8 @@ export default function AdminPopup() {
       const d = await res.json().catch(() => ({}));
       if (!res.ok) { setError(d.error || "Could not load the logs."); setData(null); return; }
       setData(d);
+    } catch {
+      setError("No connection. Check your internet and try again.");
     } finally { setBusy(false); }
   }, []);
 
@@ -103,7 +106,7 @@ export default function AdminPopup() {
             </button>
           </div>
           {error && <p className="err" role="alert">{error}</p>}
-          <button className="adm-unlock" disabled={busy || !password}>{busy ? "Checking…" : "Unlock"}</button>
+          <button className="adm-unlock" disabled={busy || !password}>{busy ? <><Spinner /> Checking…</> : "Unlock"}</button>
           <div className="adm-hint">Ctrl + Alt + R or Esc to close</div>
         </form>
       </div>
@@ -126,21 +129,21 @@ export default function AdminPopup() {
                 <button role="tab" aria-selected={tab === "users"} onClick={() => setTab("users")}>People</button>
                 <button role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Logins &amp; logouts</button>
               </div>
-              <input className="input adm-q" placeholder="Search name, company or phone" value={q} onChange={e => setQ(e.target.value)} />
-              <button className="link" disabled={busy} onClick={() => load(password)}>{busy ? "Refreshing…" : "Refresh"}</button>
+              <input className="input adm-q" placeholder="Search phone, name or company" value={q} onChange={e => setQ(e.target.value)} />
+              <button className="link" disabled={busy} onClick={() => load(password)}>{busy ? <><Spinner size={12} /> Refreshing…</> : "Refresh"}</button>
               <button className="link" onClick={() =>
                 tab === "users"
                   ? download("mce-users.csv", users.map(u => ({ name: u.name, company: u.company, phone: phoneFmt(u.phone), logins: u.login_count, first_seen: fmt(u.created_at), last_login: fmt(u.last_login_at), last_logout: fmt(u.last_logout_at) })))
                   : download("mce-access-log.csv", events.map(e => ({ time: fmt(e.at), event: e.event, name: e.name, company: e.company, phone: phoneFmt(e.phone), ip: e.ip, browser: e.user_agent })))
               }>Download CSV</button>
             </div>
-            <div className="adm-tbl">
+            <div className={busy ? "adm-tbl busy" : "adm-tbl"} aria-busy={busy}>
               {tab === "users" ? (
                 <table>
                   <thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Logins</th><th>Last login</th><th>Last logout</th><th>First seen</th></tr></thead>
                   <tbody>
                     {users.map(u => (
-                      <tr key={u.phone}><td>{u.name}</td><td>{u.company}</td><td>{phoneFmt(u.phone)}</td><td className="num">{u.login_count}</td><td>{fmt(u.last_login_at)}</td><td>{fmt(u.last_logout_at)}</td><td>{fmt(u.created_at)}</td></tr>
+                      <tr key={u.phone}><td>{u.name || "—"}</td><td>{u.company || "—"}</td><td>{phoneFmt(u.phone)}</td><td className="num">{u.login_count}</td><td>{fmt(u.last_login_at)}</td><td>{fmt(u.last_logout_at)}</td><td>{fmt(u.created_at)}</td></tr>
                     ))}
                     {!users.length && <tr><td colSpan={7} className="adm-empty">No matches</td></tr>}
                   </tbody>
@@ -150,7 +153,7 @@ export default function AdminPopup() {
                   <thead><tr><th>Time</th><th>Event</th><th>Name</th><th>Company</th><th>Phone</th><th>IP</th></tr></thead>
                   <tbody>
                     {events.map((e, i) => (
-                      <tr key={i}><td>{fmt(e.at)}</td><td><span className={`adm-ev ${e.event}`}>{e.event === "login" ? "Login" : "Logout"}</span></td><td>{e.name}</td><td>{e.company}</td><td>{phoneFmt(e.phone)}</td><td title={e.user_agent || ""}>{e.ip || "—"}</td></tr>
+                      <tr key={i}><td>{fmt(e.at)}</td><td><span className={`adm-ev ${e.event}`}>{e.event === "login" ? "Login" : "Logout"}</span></td><td>{e.name || "—"}</td><td>{e.company || "—"}</td><td>{phoneFmt(e.phone)}</td><td title={e.user_agent || ""}>{e.ip || "—"}</td></tr>
                     ))}
                     {!events.length && <tr><td colSpan={6} className="adm-empty">No matches</td></tr>}
                   </tbody>

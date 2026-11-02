@@ -3,19 +3,12 @@ import { clientFrom, createOtp, discardOtp } from "@/lib/auth";
 import { normalizeEthPhone } from "@/lib/phone";
 import { sendSms, smsConfigured } from "@/lib/sms";
 
-const clean = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
-
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const phone = normalizeEthPhone(typeof body.phone === "string" ? body.phone : "");
-  const name = clean(body.name, 80);
-  const company = clean(body.company, 120);
-
-  if (!name || name.length < 2) return NextResponse.json({ error: "Enter your full name." }, { status: 400 });
-  if (!company || company.length < 2) return NextResponse.json({ error: "Enter your company." }, { status: 400 });
   if (!phone) return NextResponse.json({ error: "Enter an Ethiopian mobile number, e.g. 0911 234 567." }, { status: 400 });
 
-  const r = await createOtp(phone, name, company, clientFrom(req));
+  const r = await createOtp(phone, clientFrom(req));
   if ("error" in r) return NextResponse.json({ error: r.error, retryAfter: r.retryAfter }, { status: 429 });
 
   try {

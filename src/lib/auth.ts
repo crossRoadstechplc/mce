@@ -29,7 +29,7 @@ export function clientFrom(req: Request): Client {
 /* ---------- one-time codes ---------- */
 
 /** Checks limits and stores a new code. Returns the code to send, or an error message. */
-export async function createOtp(phone: string, name: string, company: string, c: Client): Promise<{ code: string } | { error: string; retryAfter?: number }> {
+export async function createOtp(phone: string, c: Client): Promise<{ code: string } | { error: string; retryAfter?: number }> {
   const sql = await db();
   const [stats] = await sql<{ last: Date | null; per_phone: number; per_ip: number }[]>`
     SELECT
@@ -49,7 +49,7 @@ export async function createOtp(phone: string, name: string, company: string, c:
     // Only the newest code for a phone is valid.
     await tx`UPDATE mce.otp_codes SET consumed_at = now() WHERE phone = ${phone} AND consumed_at IS NULL`;
     await tx`INSERT INTO mce.otp_codes (phone, name, company, code_hash, expires_at, ip)
-             VALUES (${phone}, ${name}, ${company}, ${hashCode(phone, code)}, now() + ${OTP_TTL_MIN + " minutes"}::interval, ${c.ip})`;
+             VALUES (${phone}, '', '', ${hashCode(phone, code)}, now() + ${OTP_TTL_MIN + " minutes"}::interval, ${c.ip})`;
   });
   return { code };
 }
@@ -60,12 +60,12 @@ export async function discardOtp(phone: string) {
   await sql`DELETE FROM mce.otp_codes WHERE id = (SELECT id FROM mce.otp_codes WHERE phone = ${phone} ORDER BY id DESC LIMIT 1)`;
 }
 
-type OtpRow = { id: string; name: string; company: string; code_hash: string; expires_at: Date; attempts: number };
+type OtpRow = { id: string; code_hash: string; expires_at: Date; attempts: number };
 
-export async function verifyOtp(phone: string, code: string): Promise<{ ok: true; name: string; company: string } | { ok: false; error: string }> {
+export async function verifyOtp(phone: string, code: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const sql = await db();
   const [row] = await sql<OtpRow[]>`
-    SELECT id, name, company, code_hash, expires_at, attempts FROM mce.otp_codes
+    SELECT id, code_hash, expires_at, attempts FROM mce.otp_codes
      WHERE phone = ${phone} AND consumed_at IS NULL ORDER BY id DESC LIMIT 1`;
   if (!row) return { ok: false, error: "No active code. Request a new one." };
   if (ms(row.expires_at) < Date.now()) return { ok: false, error: "This code has expired. Request a new one." };
@@ -80,28 +80,28 @@ export async function verifyOtp(phone: string, code: string): Promise<{ ok: true
   // Mark used only if still unused, so the same code can't start two sessions.
   const used = await sql`UPDATE mce.otp_codes SET consumed_at = now() WHERE id = ${row.id} AND consumed_at IS NULL RETURNING id`;
   if (!used.length) return { ok: false, error: "No active code. Request a new one." };
-  return { ok: true, name: row.name, company: row.company };
+  return { ok: true };
 }
 
 /* ---------- sessions and the access log ---------- */
 
 /** Creates the user if new, starts a session and records the login. Returns the cookie token. */
-export async function startSession(phone: string, name: string, company: string, c: Client) {
+export async function startSession(phone: string, c: Client) {
   const sql = await db();
   const token = crypto.randomBytes(32).toString("base64url");
   const expires = new Date(Date.now() + SESSION_DAYS * 86_400_000);
 
   await sql.begin(async tx => {
-    const [user] = await tx<{ id: string }[]>`
-      INSERT INTO mce.users (phone, name, company, last_login_at, login_count) VALUES (${phone}, ${name}, ${company}, now(), 1)
-      ON CONFLICT (phone) DO UPDATE SET name = excluded.name, company = excluded.company,
-        last_login_at = excluded.last_login_at, login_count = mce.users.login_count + 1
-      RETURNING id`;
+    // Returning users keep the name and company stored from earlier sign-ins.
+    const [user] = await tx<{ id: string; name: string; company: string }[]>`
+      INSERT INTO mce.users (phone, name, company, last_login_at, login_count) VALUES (${phone}, '', '', now(), 1)
+      ON CONFLICT (phone) DO UPDATE SET last_login_at = excluded.last_login_at, login_count = mce.users.login_count + 1
+      RETURNING id, name, company`;
     const [s] = await tx<{ id: string }[]>`
       INSERT INTO mce.sessions (token_hash, user_id, expires_at, ip, user_agent)
       VALUES (${sha256(token)}, ${user.id}, ${expires}, ${c.ip}, ${c.userAgent}) RETURNING id`;
     await tx`INSERT INTO mce.access_log (event, user_id, session_id, phone, name, company, ip, user_agent)
-             VALUES ('login', ${user.id}, ${s.id}, ${phone}, ${name}, ${company}, ${c.ip}, ${c.userAgent})`;
+             VALUES ('login', ${user.id}, ${s.id}, ${phone}, ${user.name}, ${user.company}, ${c.ip}, ${c.userAgent})`;
   });
   return { token, expires };
 }
