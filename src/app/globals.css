@@ -121,3 +121,5 @@ button { font: inherit; cursor: pointer; color: inherit; }
 
 .sms-hint { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); color: var(--ink); border-radius: 12px; padding: 11px 13px; font-size: 0.82rem; line-height: 1.45; }
 .sms-hint svg { flex: none; color: var(--accent); margin-top: 1px; }
+.sent-to { overflow-wrap: anywhere; }
+.adm-ua { color: var(--muted); }

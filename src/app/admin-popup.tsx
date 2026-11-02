@@ -3,11 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "./loader";
 
-type User = { name: string; company: string; phone: string; login_count: number; created_at: string; last_login_at: string | null; last_logout_at: string | null };
-type Event = { at: string; event: "login" | "logout"; name: string; company: string; phone: string; ip: string | null; user_agent: string | null };
+type User = { phone: string | null; email: string | null; login_count: number; created_at: string; last_login_at: string | null; last_logout_at: string | null };
+type Event = { at: string; event: "login" | "logout"; phone: string | null; email: string | null; ip: string | null; user_agent: string | null };
 
 const fmt = (t: string | null) => (t ? new Date(t).toLocaleString("en-GB", { timeZone: "Africa/Addis_Ababa", dateStyle: "medium", timeStyle: "short" }) : "—");
-const phoneFmt = (p: string) => p.replace(/^251(\d{2})(\d{3})(\d{4})$/, "+251 $1 $2 $3");
+// "Chrome on Windows" from a user-agent string.
+function browser(ua: string | null) {
+  if (!ua) return "—";
+  const b = /Edg\//.test(ua) ? "Edge" : /OPR\/|Opera/.test(ua) ? "Opera" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "";
+  const os = /Windows/.test(ua) ? "Windows" : /Android/.test(ua) ? "Android" : /iPhone|iPad/.test(ua) ? "iOS" : /Mac OS X/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "";
+  return b && os ? `${b} on ${os}` : b || os || ua.slice(0, 40);
+}
+const phoneFmt = (p: string | null) => (p || "").replace(/^251(\d{2})(\d{3})(\d{4})$/, "+251 $1 $2 $3");
 
 function download(name: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
@@ -70,8 +77,10 @@ export default function AdminPopup() {
   const lock = () => { setData(null); setPassword(""); setQ(""); setShow(false); };
 
   const ql = q.trim().toLowerCase();
-  const match = useCallback((r: { name: string; company: string; phone: string }) =>
-    !ql || r.name.toLowerCase().includes(ql) || r.company.toLowerCase().includes(ql) || r.phone.includes(ql.replace(/\D/g, "") || ql), [ql]);
+  const match = useCallback((r: { phone: string | null; email: string | null }) =>
+    !ql || (r.email || "").includes(ql) || (!!r.phone && r.phone.includes(ql.replace(/\D/g, "") || ql)), [ql]);
+  // Show a Phone column only if anyone signed in by SMS.
+  const hasPhone = !!data && (data.users.some(u => u.phone) || data.events.some(e => e.phone));
   const users = useMemo(() => (data?.users ?? []).filter(match), [data, match]);
   const events = useMemo(() => (data?.events ?? []).filter(match), [data, match]);
 
@@ -118,7 +127,7 @@ export default function AdminPopup() {
       <div className="adm" role="dialog" aria-modal="true" aria-label="Sign-in log">
         <div className="adm-h">
           <b>Sign-in log</b>
-          <span className="adm-sub">{data.users.length} people · {data.events.length} events</span>
+          <span className="adm-sub">{data.users.length} leads · {data.events.length} events</span>
           <span className="adm-sp" />
           <button className="link" onClick={lock}>Lock</button>
           <button className="adm-x" aria-label="Close" onClick={close}>×</button>
@@ -126,36 +135,43 @@ export default function AdminPopup() {
         <>
             <div className="adm-ctrl">
               <div className="adm-tabs" role="tablist">
-                <button role="tab" aria-selected={tab === "users"} onClick={() => setTab("users")}>People</button>
+                <button role="tab" aria-selected={tab === "users"} onClick={() => setTab("users")}>Leads</button>
                 <button role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Logins &amp; logouts</button>
               </div>
-              <input className="input adm-q" placeholder="Search phone, name or company" value={q} onChange={e => setQ(e.target.value)} />
+              <input className="input adm-q" placeholder={hasPhone ? "Search email or phone" : "Search email"} value={q} onChange={e => setQ(e.target.value)} />
               <button className="link" disabled={busy} onClick={() => load(password)}>{busy ? <><Spinner size={12} /> Refreshing…</> : "Refresh"}</button>
               <button className="link" onClick={() =>
                 tab === "users"
-                  ? download("mce-users.csv", users.map(u => ({ name: u.name, company: u.company, phone: phoneFmt(u.phone), logins: u.login_count, first_seen: fmt(u.created_at), last_login: fmt(u.last_login_at), last_logout: fmt(u.last_logout_at) })))
-                  : download("mce-access-log.csv", events.map(e => ({ time: fmt(e.at), event: e.event, name: e.name, company: e.company, phone: phoneFmt(e.phone), ip: e.ip, browser: e.user_agent })))
+                  ? download("mce-leads.csv", users.map(u => ({ email: u.email, ...(hasPhone && { phone: phoneFmt(u.phone) }), logins: u.login_count, first_seen: fmt(u.created_at), last_login: fmt(u.last_login_at), last_logout: fmt(u.last_logout_at) })))
+                  : download("mce-access-log.csv", events.map(e => ({ time: fmt(e.at), event: e.event, email: e.email, ...(hasPhone && { phone: phoneFmt(e.phone) }), ip: e.ip, browser: e.user_agent })))
               }>Download CSV</button>
             </div>
             <div className={busy ? "adm-tbl busy" : "adm-tbl"} aria-busy={busy}>
               {tab === "users" ? (
                 <table>
-                  <thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Logins</th><th>Last login</th><th>Last logout</th><th>First seen</th></tr></thead>
+                  <thead><tr><th>Email</th>{hasPhone && <th>Phone</th>}<th>Logins</th><th>Last login</th><th>Last logout</th><th>First seen</th></tr></thead>
                   <tbody>
                     {users.map(u => (
-                      <tr key={u.phone}><td>{u.name || "—"}</td><td>{u.company || "—"}</td><td>{phoneFmt(u.phone)}</td><td className="num">{u.login_count}</td><td>{fmt(u.last_login_at)}</td><td>{fmt(u.last_logout_at)}</td><td>{fmt(u.created_at)}</td></tr>
+                      <tr key={u.email || u.phone || ""}>
+                        <td>{u.email || "—"}</td>{hasPhone && <td>{phoneFmt(u.phone) || "—"}</td>}
+                        <td className="num">{u.login_count}</td><td>{fmt(u.last_login_at)}</td><td>{fmt(u.last_logout_at)}</td><td>{fmt(u.created_at)}</td>
+                      </tr>
                     ))}
-                    {!users.length && <tr><td colSpan={7} className="adm-empty">No matches</td></tr>}
+                    {!users.length && <tr><td colSpan={hasPhone ? 6 : 5} className="adm-empty">{q ? "No matches" : "No sign-ins yet"}</td></tr>}
                   </tbody>
                 </table>
               ) : (
                 <table>
-                  <thead><tr><th>Time</th><th>Event</th><th>Name</th><th>Company</th><th>Phone</th><th>IP</th></tr></thead>
+                  <thead><tr><th>Time</th><th>Event</th><th>Email</th>{hasPhone && <th>Phone</th>}<th>IP</th><th>Browser</th></tr></thead>
                   <tbody>
                     {events.map((e, i) => (
-                      <tr key={i}><td>{fmt(e.at)}</td><td><span className={`adm-ev ${e.event}`}>{e.event === "login" ? "Login" : "Logout"}</span></td><td>{e.name || "—"}</td><td>{e.company || "—"}</td><td>{phoneFmt(e.phone)}</td><td title={e.user_agent || ""}>{e.ip || "—"}</td></tr>
+                      <tr key={i}>
+                        <td>{fmt(e.at)}</td><td><span className={`adm-ev ${e.event}`}>{e.event === "login" ? "Login" : "Logout"}</span></td>
+                        <td>{e.email || "—"}</td>{hasPhone && <td>{phoneFmt(e.phone) || "—"}</td>}
+                        <td>{e.ip || "—"}</td><td className="adm-ua" title={e.user_agent || ""}>{browser(e.user_agent)}</td>
+                      </tr>
                     ))}
-                    {!events.length && <tr><td colSpan={6} className="adm-empty">No matches</td></tr>}
+                    {!events.length && <tr><td colSpan={hasPhone ? 6 : 5} className="adm-empty">{q ? "No matches" : "No sign-ins yet"}</td></tr>}
                   </tbody>
                 </table>
               )}

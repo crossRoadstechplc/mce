@@ -29,8 +29,6 @@ CREATE SCHEMA IF NOT EXISTS mce;
 CREATE TABLE IF NOT EXISTS mce.users (
   id             bigserial PRIMARY KEY,
   phone          text NOT NULL UNIQUE,
-  name           text NOT NULL,
-  company        text NOT NULL,
   created_at     timestamptz NOT NULL DEFAULT now(),
   last_login_at  timestamptz,
   last_logout_at timestamptz,
@@ -40,8 +38,6 @@ CREATE TABLE IF NOT EXISTS mce.users (
 CREATE TABLE IF NOT EXISTS mce.otp_codes (
   id          bigserial PRIMARY KEY,
   phone       text NOT NULL,
-  name        text NOT NULL,
-  company     text NOT NULL,
   code_hash   text NOT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
   expires_at  timestamptz NOT NULL,
@@ -63,7 +59,7 @@ CREATE TABLE IF NOT EXISTS mce.sessions (
   user_agent    text
 );
 
--- Every login and logout, with the name, company and phone given at that login.
+-- Every login and logout, with the email or phone used.
 CREATE TABLE IF NOT EXISTS mce.access_log (
   id         bigserial PRIMARY KEY,
   event      text NOT NULL CHECK (event IN ('login', 'logout')),
@@ -71,13 +67,26 @@ CREATE TABLE IF NOT EXISTS mce.access_log (
   user_id    bigint NOT NULL REFERENCES mce.users(id) ON DELETE CASCADE,
   session_id bigint REFERENCES mce.sessions(id) ON DELETE SET NULL,
   phone      text NOT NULL,
-  name       text NOT NULL,
-  company    text NOT NULL,
   ip         text,
   user_agent text
 );
 CREATE INDEX IF NOT EXISTS access_log_at_idx ON mce.access_log (at);
 CREATE INDEX IF NOT EXISTS access_log_user_idx ON mce.access_log (user_id, event);
+
+-- Email sign-in (OTP_MEDIUM=email): each table can hold an email instead of a phone.
+ALTER TABLE mce.users      ADD COLUMN IF NOT EXISTS email text;
+ALTER TABLE mce.users      ALTER COLUMN phone DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_key ON mce.users (email);
+ALTER TABLE mce.otp_codes  ADD COLUMN IF NOT EXISTS email text;
+ALTER TABLE mce.otp_codes  ALTER COLUMN phone DROP NOT NULL;
+CREATE INDEX IF NOT EXISTS otp_email_idx ON mce.otp_codes (email, created_at);
+ALTER TABLE mce.access_log ADD COLUMN IF NOT EXISTS email text;
+ALTER TABLE mce.access_log ALTER COLUMN phone DROP NOT NULL;
+
+-- Name and company are no longer collected.
+ALTER TABLE mce.users      DROP COLUMN IF EXISTS name, DROP COLUMN IF EXISTS company;
+ALTER TABLE mce.otp_codes  DROP COLUMN IF EXISTS name, DROP COLUMN IF EXISTS company;
+ALTER TABLE mce.access_log DROP COLUMN IF EXISTS name, DROP COLUMN IF EXISTS company;
 
 ALTER TABLE mce.users      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mce.otp_codes  ENABLE ROW LEVEL SECURITY;

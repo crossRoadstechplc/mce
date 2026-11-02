@@ -1,26 +1,28 @@
-# MCE Residential Feasibility — with phone sign-in
+# MCE Residential Feasibility — with sign-in
 
 The feasibility app (`protected/feasibility.html`) is the original file from `../reference/`, byte-for-byte unchanged.
-This Next.js app puts an SMS one-time-code sign-in in front of it and logs every login and logout to a Supabase (Postgres) database.
+This Next.js app puts a one-time-code sign-in (email or SMS) in front of it and logs every login and logout to a Supabase (Postgres) database.
 
 ## Flow
 1. Visitor opens `/` → sent to `/login`.
-2. Enters full name, company and an Ethiopian mobile number (09… or 07…, any of `0911234567`, `911234567`, `+251911234567`).
-3. A 6-digit code is sent by GeezSMS (valid 5 min, 5 wrong tries max, 60 s between resends, 5 codes/hour per number).
+2. Enters their email address (`OTP_MEDIUM=email`, default) or Ethiopian mobile number (`OTP_MEDIUM=sms`: `0911234567`, `911234567`, `+251911234567`).
+3. A 6-digit code is emailed (SMTP) or texted (GeezSMS). Valid 5 min, 5 wrong tries max, 60 s between resends, 5 codes/hour per email or number.
 4. Correct code → session starts (cookie, `SESSION_DAYS`, default 7) and a `login` row is logged.
 5. The app opens below a slim bar showing the user and a **Log out** button. Logging out ends the session and logs a `logout` row.
 
 ## Setup
 ```bash
 npm install
-cp .env.example .env   # then fill in DATABASE_URL, GEEZSMS_API_KEY, AUTH_SECRET, ADMIN_PASSWORD
+cp .env.example .env   # then fill in DATABASE_URL, SMTP_* (or GEEZSMS_API_KEY), AUTH_SECRET, ADMIN_PASSWORD
 npm run dev            # http://localhost:3000
 ```
 Settings are read from `.env`:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `GEEZSMS_API_KEY` | yes (production) | GeezSMS API key. Without it, dev mode prints codes in the terminal. |
+| `OTP_MEDIUM` | no | `email` (default) or `sms`. Decides how codes are sent and what users sign in with. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | when email | Mail server used to send codes (nodemailer). |
+| `GEEZSMS_API_KEY` | when sms | GeezSMS API key.  |
 | `GEEZSMS_SENDER_ID` | no | Approved sender name; leave blank for the default. |
 | `AUTH_SECRET` | yes | Long random string used to hash codes. |
 | `ADMIN_PASSWORD` | for the log popup | Password for the Ctrl + Alt + R sign-in log. |

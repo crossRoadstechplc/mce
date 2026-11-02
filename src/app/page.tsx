@@ -21,13 +21,14 @@ async function Gate() {
 
   const last = user.lastLoginAt ? `Previous login: ${new Date(user.lastLoginAt).toLocaleString("en-GB", { timeZone: "Africa/Addis_Ababa" })}` : "First login";
 
+  const contact = user.email || (user.phone ? formatEthPhone(user.phone) : "");
+
   return (
     <div className="shell">
       <header className="bar">
         <span className="brand">MCE Real Estate · Feasibility</span>
-        <span className="who" title={`${formatEthPhone(user.phone)} · ${last}`}>
-          <b>{user.name || formatEthPhone(user.phone)}</b>
-          {user.company && <span className="co"> · {user.company}</span>}
+        <span className="who" title={`${contact} · ${last}`}>
+          <b>{contact}</b>
         </span>
         <LogoutButton />
       </header>

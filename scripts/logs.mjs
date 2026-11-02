@@ -14,18 +14,18 @@ try {
   if (!ok) { console.log("No tables yet. They are created on the first sign-in."); process.exit(0); }
 
   if (arg === "csv") {
-    const rows = await sql`SELECT at, event, name, company, phone, ip, user_agent FROM mce.access_log ORDER BY id`;
+    const rows = await sql`SELECT at, event, email, phone, ip, user_agent FROM mce.access_log ORDER BY id`;
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    console.log(["time_utc", "time_addis", "event", "name", "company", "phone", "ip", "user_agent"].join(","));
-    for (const r of rows) console.log([new Date(r.at).toISOString(), local(r.at), r.event, r.name, r.company, r.phone, r.ip, r.user_agent].map(q).join(","));
+    console.log(["time_utc", "time_addis", "event", "email", "phone", "ip", "user_agent"].join(","));
+    for (const r of rows) console.log([new Date(r.at).toISOString(), local(r.at), r.event, r.email, r.phone, r.ip, r.user_agent].map(q).join(","));
   } else {
-    console.log("\nUsers (times in Addis Ababa)");
-    const users = await sql`SELECT name, company, phone, login_count, last_login_at, last_logout_at FROM mce.users ORDER BY last_login_at DESC NULLS LAST`;
-    console.table(users.map((u) => ({ ...u, last_login_at: local(u.last_login_at), last_logout_at: local(u.last_logout_at) })));
+    console.log("\nLeads (times in Addis Ababa)");
+    const users = await sql`SELECT email, phone, login_count, last_login_at, last_logout_at FROM mce.users ORDER BY last_login_at DESC NULLS LAST`;
+    console.table(users.map((u) => ({ ...u, email: u.email ?? "", phone: u.phone ?? "", last_login_at: local(u.last_login_at), last_logout_at: local(u.last_logout_at) })));
     const n = Number(arg) || 50;
     console.log(`\nLast ${n} logins and logouts`);
-    const ev = await sql`SELECT at, event, name, company, phone, ip FROM mce.access_log ORDER BY id DESC LIMIT ${n}`;
-    console.table(ev.map((r) => ({ ...r, at: local(r.at) })));
+    const ev = await sql`SELECT at, event, email, phone, ip FROM mce.access_log ORDER BY id DESC LIMIT ${n}`;
+    console.table(ev.map((r) => ({ ...r, email: r.email ?? "", phone: r.phone ?? "", at: local(r.at) })));
   }
 } finally {
   await sql.end();
