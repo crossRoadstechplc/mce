@@ -15,13 +15,13 @@ export async function POST(req: Request) {
   if (!company || company.length < 2) return NextResponse.json({ error: "Enter your company." }, { status: 400 });
   if (!phone) return NextResponse.json({ error: "Enter an Ethiopian mobile number, e.g. 0911 234 567." }, { status: 400 });
 
-  const r = createOtp(phone, name, company, clientFrom(req));
+  const r = await createOtp(phone, name, company, clientFrom(req));
   if ("error" in r) return NextResponse.json({ error: r.error, retryAfter: r.retryAfter }, { status: 429 });
 
   try {
     await sendSms(phone, `Your MCE Feasibility verification code is ${r.code}. It expires in 5 minutes. Do not share it.`);
   } catch {
-    discardOtp(phone);
+    await discardOtp(phone);
     return NextResponse.json({ error: "We could not send the SMS. Please try again shortly." }, { status: 502 });
   }
 

@@ -1,7 +1,7 @@
 # MCE Residential Feasibility — with phone sign-in
 
 The feasibility app (`protected/feasibility.html`) is the original file from `../reference/`, byte-for-byte unchanged.
-This Next.js app puts an SMS one-time-code sign-in in front of it and logs every login and logout to SQLite.
+This Next.js app puts an SMS one-time-code sign-in in front of it and logs every login and logout to a Supabase (Postgres) database.
 
 ## Flow
 1. Visitor opens `/` → sent to `/login`.
@@ -13,7 +13,7 @@ This Next.js app puts an SMS one-time-code sign-in in front of it and logs every
 ## Setup
 ```bash
 npm install
-cp .env.example .env   # then fill in GEEZSMS_API_KEY and AUTH_SECRET
+cp .env.example .env   # then fill in DATABASE_URL, GEEZSMS_API_KEY, AUTH_SECRET, ADMIN_PASSWORD
 npm run dev            # http://localhost:3000
 ```
 Settings are read from `.env`:
@@ -25,14 +25,14 @@ Settings are read from `.env`:
 | `AUTH_SECRET` | yes | Long random string used to hash codes. |
 | `ADMIN_PASSWORD` | for the log popup | Password for the Ctrl + Alt + R sign-in log. |
 | `SESSION_DAYS` | no | Session length in days (default 7). |
-| `DATABASE_PATH` | no | SQLite file (default `./data/app.db`). |
+| `DATABASE_URL` | yes | Supabase **Transaction pooler** connection string (Connect → Transaction pooler, port 6543) with your DB password. |
 
-Production: `npm run build && npm start`. Run behind HTTPS (the session cookie is `Secure` in production).
+Production: `npm run build && npm start`, or deploy to Vercel and add the same variables under Project → Settings → Environment Variables. Run behind HTTPS (the session cookie is `Secure` in production).
 
 ## Logs
 On the main page press **Ctrl + Alt + R**, enter `ADMIN_PASSWORD`, and see everyone who signed in (search, CSV download).
 
-Stored in `data/app.db` (SQLite):
+Stored in Supabase, in the private `mce` schema (created automatically on first use; row-level security is on, so Supabase's public API can't read it):
 - `users`: one row per phone with name, company, `last_login_at`, `last_logout_at`, `login_count`
 - `access_log`: every `login` / `logout` with time, name, company, phone, IP, browser
 - `sessions`, `otp_codes`: internal
@@ -46,7 +46,7 @@ npm run logs -- csv > logs.csv
 ## Files
 - `src/lib/sms.ts`: GeezSMS call (`POST https://api.geezsms.com/api/v1/sms/send`)
 - `src/lib/auth.ts`: codes, sessions, login/logout logging
-- `src/lib/db.ts`: SQLite schema
+- `src/lib/db.ts`: database connection and schema
 - `src/app/login/`: sign-in screens
 - `src/app/page.tsx`: signed-in shell with Log out
 - `src/app/feasibility/route.ts`: serves the original HTML to signed-in users only

@@ -7,17 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "logs": "node scripts/logs.mjs"
+    "logs": "node --env-file-if-exists=.env scripts/logs.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
     "next": "16.4.3",
+    "postgres": "^4.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

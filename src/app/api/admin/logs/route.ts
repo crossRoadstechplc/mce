@@ -30,13 +30,12 @@ export async function POST(req: Request) {
   }
   fails.delete(ip);
 
-  const users = db.prepare(
-    `SELECT name, company, phone, login_count, created_at, last_login_at, last_logout_at
-       FROM users ORDER BY COALESCE(last_login_at, created_at) DESC`
-  ).all();
-  const events = db.prepare(
-    `SELECT at, event, name, company, phone, ip, user_agent FROM access_log ORDER BY id DESC LIMIT 2000`
-  ).all();
+  const sql = await db();
+  const users = await sql`
+    SELECT name, company, phone, login_count, created_at, last_login_at, last_logout_at
+      FROM mce.users ORDER BY COALESCE(last_login_at, created_at) DESC`;
+  const events = await sql`
+    SELECT at, event, name, company, phone, ip, user_agent FROM mce.access_log ORDER BY id DESC LIMIT 2000`;
 
   return NextResponse.json({ users, events }, { headers: { "Cache-Control": "no-store" } });
 }

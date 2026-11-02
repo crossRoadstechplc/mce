@@ -1,76 +1,103 @@
 import "server-only";
-import Database from "better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import postgres from "postgres";
 
-// One SQLite file holds users, one-time codes, sessions and the login/logout log.
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "app.db");
+// Supabase Postgres. Set DATABASE_URL to the "Transaction pooler" connection string
+// (Supabase dashboard → Connect → Transaction pooler, port 6543), with your database password filled in.
+const url = process.env.DATABASE_URL;
 
+function connect() {
+  if (!url) throw new Error("DATABASE_URL is not set. Add your Supabase connection string to .env.");
+  return postgres(url, {
+    prepare: false, // required by Supabase's transaction pooler
+    max: 5,
+    idle_timeout: 20,
+    connect_timeout: 15,
+    ssl: /localhost|127\.0\.0\.1/.test(url) ? false : "require",
+    onnotice: () => {},
+  });
+}
+
+// Reuse one pool per server instance (and across hot reloads in development).
+const g = globalThis as unknown as { __mceSql?: postgres.Sql; __mceReady?: Promise<void> };
+const pool = () => (g.__mceSql ??= connect());
+
+// Tables live in their own "mce" schema with row-level security on and no policies,
+// so Supabase's public REST API cannot read them. Only this server (via DATABASE_URL) can.
 const SCHEMA = `
-CREATE TABLE IF NOT EXISTS users (
-  id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  phone          TEXT NOT NULL UNIQUE,
-  name           TEXT NOT NULL,
-  company        TEXT NOT NULL,
-  created_at     TEXT NOT NULL,
-  last_login_at  TEXT,
-  last_logout_at TEXT,
-  login_count    INTEGER NOT NULL DEFAULT 0
+CREATE SCHEMA IF NOT EXISTS mce;
+
+CREATE TABLE IF NOT EXISTS mce.users (
+  id             bigserial PRIMARY KEY,
+  phone          text NOT NULL UNIQUE,
+  name           text NOT NULL,
+  company        text NOT NULL,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  last_login_at  timestamptz,
+  last_logout_at timestamptz,
+  login_count    integer NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS otp_codes (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  phone       TEXT NOT NULL,
-  name        TEXT NOT NULL,
-  company     TEXT NOT NULL,
-  code_hash   TEXT NOT NULL,
-  created_at  TEXT NOT NULL,
-  expires_at  TEXT NOT NULL,
-  attempts    INTEGER NOT NULL DEFAULT 0,
-  consumed_at TEXT,
-  ip          TEXT
+CREATE TABLE IF NOT EXISTS mce.otp_codes (
+  id          bigserial PRIMARY KEY,
+  phone       text NOT NULL,
+  name        text NOT NULL,
+  company     text NOT NULL,
+  code_hash   text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  expires_at  timestamptz NOT NULL,
+  attempts    integer NOT NULL DEFAULT 0,
+  consumed_at timestamptz,
+  ip          text
 );
-CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone, created_at);
-CREATE INDEX IF NOT EXISTS idx_otp_ip ON otp_codes(ip, created_at);
+CREATE INDEX IF NOT EXISTS otp_phone_idx ON mce.otp_codes (phone, created_at);
+CREATE INDEX IF NOT EXISTS otp_ip_idx ON mce.otp_codes (ip, created_at);
 
-CREATE TABLE IF NOT EXISTS sessions (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  token_hash    TEXT NOT NULL UNIQUE,
-  user_id       INTEGER NOT NULL REFERENCES users(id),
-  created_at    TEXT NOT NULL,
-  expires_at    TEXT NOT NULL,
-  logged_out_at TEXT,
-  ip            TEXT,
-  user_agent    TEXT
+CREATE TABLE IF NOT EXISTS mce.sessions (
+  id            bigserial PRIMARY KEY,
+  token_hash    text NOT NULL UNIQUE,
+  user_id       bigint NOT NULL REFERENCES mce.users(id) ON DELETE CASCADE,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  expires_at    timestamptz NOT NULL,
+  logged_out_at timestamptz,
+  ip            text,
+  user_agent    text
 );
 
 -- Every login and logout, with the name, company and phone given at that login.
-CREATE TABLE IF NOT EXISTS access_log (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  event      TEXT NOT NULL CHECK (event IN ('login', 'logout')),
-  at         TEXT NOT NULL,
-  user_id    INTEGER NOT NULL REFERENCES users(id),
-  session_id INTEGER REFERENCES sessions(id),
-  phone      TEXT NOT NULL,
-  name       TEXT NOT NULL,
-  company    TEXT NOT NULL,
-  ip         TEXT,
-  user_agent TEXT
+CREATE TABLE IF NOT EXISTS mce.access_log (
+  id         bigserial PRIMARY KEY,
+  event      text NOT NULL CHECK (event IN ('login', 'logout')),
+  at         timestamptz NOT NULL DEFAULT now(),
+  user_id    bigint NOT NULL REFERENCES mce.users(id) ON DELETE CASCADE,
+  session_id bigint REFERENCES mce.sessions(id) ON DELETE SET NULL,
+  phone      text NOT NULL,
+  name       text NOT NULL,
+  company    text NOT NULL,
+  ip         text,
+  user_agent text
 );
-CREATE INDEX IF NOT EXISTS idx_log_at ON access_log(at);
+CREATE INDEX IF NOT EXISTS access_log_at_idx ON mce.access_log (at);
+CREATE INDEX IF NOT EXISTS access_log_user_idx ON mce.access_log (user_id, event);
+
+ALTER TABLE mce.users      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mce.otp_codes  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mce.sessions   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mce.access_log ENABLE ROW LEVEL SECURITY;
 `;
 
-function open() {
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-  const db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  db.exec(SCHEMA);
-  return db;
+/** Returns the connection pool, creating the tables on first use. */
+export async function db(): Promise<postgres.Sql> {
+  const sql = pool();
+  g.__mceReady ??= sql
+    .begin(async tx => {
+      await tx`SELECT pg_advisory_xact_lock(726354)`; // one instance at a time creates tables
+      await tx.unsafe(SCHEMA);
+    })
+    .then(() => undefined)
+    .catch(err => {
+      g.__mceReady = undefined; // retry on the next request
+      throw err;
+    });
+  await g.__mceReady;
+  return sql;
 }
-
-// Reuse one connection across hot reloads in development.
-const g = globalThis as unknown as { __mceDb?: Database.Database };
-export const db = g.__mceDb ?? (g.__mceDb = open());
-
-export const now = () => new Date().toISOString();
